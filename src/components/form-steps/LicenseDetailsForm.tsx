@@ -36,12 +36,14 @@ const LicenseDetailsForm = () => {
           render={({ field: formField }) => (
             <FormItem>
               <FormLabel>{field.name}</FormLabel>
-              <FormControl>
-                {field.type === 'text' && (
+              {field.type === 'text' && (
+                <FormControl>
                   <Input {...formField} />
-                )}
-                
-                {field.type === 'dropdown' && (
+                </FormControl>
+              )}
+              
+              {field.type === 'dropdown' && (
+                <FormControl>
                   <Select
                     onValueChange={formField.onChange}
                     defaultValue={formField.value}
@@ -57,15 +59,18 @@ const LicenseDetailsForm = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                )}
-                
-                {field.type === 'file' && (
+                </FormControl>
+              )}
+              
+              {field.type === 'file' && (
+                <FormControl>
                   <FileUploadArea
                     onChange={(file) => setValue(field.id, file)}
                     maxSize={field.validation?.maxSize}
                   />
-                )}
-              </FormControl>
+                </FormControl>
+              )}
+              
               {field.description && (
                 <FormDescription>{field.description}</FormDescription>
               )}

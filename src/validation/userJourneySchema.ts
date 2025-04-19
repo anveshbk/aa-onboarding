@@ -8,6 +8,6 @@ export const UserJourneySchema = z.object({
   agreementExecuted: z.boolean().optional(),
   agreementFile: z.any().optional(),
   consentRequestSMS: z.boolean().optional(),
-  fiuCrIdUat: z.string().min(1, "FIU CR ID UAT is required"),
-  fiuCrIdProd: z.string().min(1, "FIU CR ID Prod is required"),
+  fiuCrIdUat: z.string().optional(),
+  fiuCrIdProd: z.string().optional(),
 });

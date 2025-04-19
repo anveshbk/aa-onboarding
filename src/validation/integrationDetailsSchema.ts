@@ -9,7 +9,7 @@ export const IntegrationDetailsSchema = z.object({
     sdkVersion: z.string().optional(),
     assisted: z.boolean().optional(),
     detached: z.boolean().optional(),
-  }),
-  integrationMode: z.string().min(1, "Integration Mode is required"),
+  }).optional(),
+  integrationMode: z.string().optional(),
   figmaUrl: z.string().optional(),
 });

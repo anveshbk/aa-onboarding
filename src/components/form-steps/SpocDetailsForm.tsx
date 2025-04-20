@@ -1,4 +1,3 @@
-
 import { useFormContext } from "react-hook-form";
 import { 
   FormField,
@@ -111,9 +110,6 @@ const SpocDetailsForm = () => {
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">FIU SPOC Details</h2>
-      <p className="text-muted-foreground mb-6">
-        Please provide contact details for each type of SPOC (Single Point of Contact).
-      </p>
       
       {spocTypes.map((spoc) => (
         <SpocContact

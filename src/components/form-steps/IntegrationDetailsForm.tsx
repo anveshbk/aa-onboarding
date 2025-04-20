@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { 
@@ -232,6 +231,7 @@ const IntegrationDetailsForm = ({ setShowCocreatedDevelopment }: IntegrationDeta
         </div>
       </div>
       
+      {/* Integration Mode */}
       <FormField
         control={control}
         name="integrationMode"
@@ -239,24 +239,26 @@ const IntegrationDetailsForm = ({ setShowCocreatedDevelopment }: IntegrationDeta
           <FormItem>
             <FormLabel>Integration Mode</FormLabel>
             <FormControl>
-              <Select
-                onValueChange={(value) => {
-                  field.onChange(value);
-                  setShowCocreatedDevelopment(value === "Cocreated FIU" || value === "Cocreated TSP");
-                }}
-                value={field.value}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Integration Mode" />
-                </SelectTrigger>
-                <SelectContent>
-                  {formFields.integrationDetails.fields[1].options?.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex flex-wrap gap-2">
+                {formFields.integrationDetails.fields[1].options?.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => {
+                      field.onChange(option);
+                      setShowCocreatedDevelopment(option === "Cocreated FIU" || option === "Cocreated TSP");
+                    }}
+                    className={cn(
+                      "px-4 py-2 text-sm border rounded-md transition-colors",
+                      field.value === option
+                        ? "bg-primary/10 border-primary text-primary"
+                        : "bg-background border-input text-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
             </FormControl>
             <FormMessage />
           </FormItem>

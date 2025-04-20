@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { 
@@ -316,21 +315,23 @@ const UserJourneySettingsForm = () => {
           <FormItem>
             <FormLabel>Consent accounts flow</FormLabel>
             <FormControl>
-              <Select
-                onValueChange={field.onChange}
-                value={field.value}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select consent accounts flow" />
-                </SelectTrigger>
-                <SelectContent>
-                  {fields.find(f => f.id === "consentAccountsFlow")?.options?.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex flex-wrap gap-2">
+                {fields.find(f => f.id === "consentAccountsFlow")?.options?.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => field.onChange(option)}
+                    className={cn(
+                      "px-4 py-2 text-sm border rounded-md transition-colors",
+                      field.value === option
+                        ? "bg-primary/10 border-primary text-primary"
+                        : "bg-background border-input text-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
             </FormControl>
             <FormMessage />
           </FormItem>

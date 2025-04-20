@@ -12,6 +12,25 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import formFields from "@/data/formFields.json";
 
+const spocTypes = [
+  {
+    spocType: "FIU SPOC",
+    description: "Will be in to for all FIU conversation and must be senior enough as sensitive info like keys etc will be shared"
+  },
+  {
+    spocType: "FIU Escalation SPOC",
+    description: "Incase if there is any escalation"
+  },
+  {
+    spocType: "RBI SPOC",
+    description: "Incase RBI anytime requested to share SPOC details then this will be shared"
+  },
+  {
+    spocType: "Grievance SPOC",
+    description: "Incase any grievances received from end customer to AA then we will be reaching out to this SPOC"
+  }
+];
+
 const SpocContact = ({ 
   control, 
   namePrefix, 
@@ -89,7 +108,6 @@ const SpocContact = ({
 
 const SpocDetailsForm = () => {
   const { control } = useFormContext();
-  const spocTypes = formFields.spocDetails.fields[0].rows;
   
   return (
     <div>

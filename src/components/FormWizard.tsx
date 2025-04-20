@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import StepIndicator from "@/components/StepIndicator";
 import TspDetailsForm from "@/components/form-steps/TspDetailsForm";
 import FiuDetailsForm from "@/components/form-steps/FiuDetailsForm";
@@ -38,33 +37,33 @@ const FormWizard = () => {
   // Create steps dynamically, excluding conditional steps initially
   const baseSteps: StepConfig[] = [
     {
-      title: formFields.tspDetails.title,
+      title: "TSP Details",
       component: <TspDetailsForm />,
       validationSchema: TspDetailsSchema,
     },
     {
-      title: formFields.fiuDetails.title,
+      title: "FIU Details",
       component: <FiuDetailsForm />,
       validationSchema: FiuDetailsSchema,
     },
     {
-      title: formFields.spocDetails.title,
-      description: formFields.spocDetails.description,
+      title: "FIU SPOC Details",
+      description: "Please provide contact details for each type of SPOC (Single Point of Contact).",
       component: <SpocDetailsForm />,
       validationSchema: SpocDetailsSchema,
     },
     {
-      title: formFields.integrationDetails.title,
+      title: "Integration to Onemoney",
       component: <IntegrationDetailsForm setShowCocreatedDevelopment={setShowCocreatedDevelopment} />,
       validationSchema: IntegrationDetailsSchema,
     },
     {
-      title: formFields.userJourneySettings.title,
+      title: "User Journey",
       component: <UserJourneySettingsForm />,
       validationSchema: UserJourneySettingsSchema,
     },
     {
-      title: formFields.consentParameters.title,
+      title: "Consent Parameters",
       component: <ConsentParametersForm />,
       validationSchema: ConsentParametersSchema,
     }
@@ -84,8 +83,8 @@ const FormWizard = () => {
     ? [
         ...baseSteps, 
         {
-          title: formFields.cocreatedDevelopment.title,
-          description: formFields.cocreatedDevelopment.description,
+          title: "Cocreated Development",
+          description: "Applicable only for cocoreated development",
           component: <CocreatedDevelopmentForm />,
           validationSchema: CocreatedDevelopmentSchema,
         }
@@ -136,8 +135,6 @@ const FormWizard = () => {
     alert("Onboarding form submitted successfully!");
   };
 
-  const progressPercentage = ((currentStep + 1) / steps.length) * 100;
-
   return (
     <div className="container mx-auto py-8 px-4 onemoney-form">
       <Card className="mb-8">
@@ -159,17 +156,16 @@ const FormWizard = () => {
             steps={steps.map(step => step.title)} 
             currentStep={currentStep}
           />
-          
-          <Progress value={progressPercentage} className="mt-4" />
         </div>
       </Card>
 
       <Card className="mb-8">
         <div className="p-6">
-          <h2 className="text-xl font-semibold mb-2">{steps[currentStep].title}</h2>
-          {steps[currentStep].description && (
-            <p className="text-muted-foreground mb-6">{steps[currentStep].description}</p>
-          )}
+          <div className="mb-6">
+            {steps[currentStep].description && (
+              <p className="text-muted-foreground mb-6">{steps[currentStep].description}</p>
+            )}
+          </div>
           
           <FormProvider {...methods}>
             <form>

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { 
   FormField,
@@ -19,8 +19,9 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash } from "lucide-react";
+import { Check, Plus, Trash } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ToggleButtonGroup } from "@/components/ui/toggle-button-group";
 import formFields from "@/data/formFields.json";
 
 interface IntegrationDetailsFormProps {
@@ -77,126 +78,158 @@ const IntegrationDetailsForm = ({ setShowCocreatedDevelopment }: IntegrationDeta
   
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-6">
+      <h2 className="text-xl font-semibold">Integration to Onemoney</h2>
+      
+      <div className="space-y-6">
         <h3 className="text-md font-medium mb-2">Integration Type</h3>
         
-        {integrationType.map((type) => (
-          <FormField
-            key={type.id}
-            control={control}
-            name={`integrationType.${type.id}`}
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">{type.name}</FormLabel>
-                  <FormDescription>
-                    {type.description}
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        ))}
-        
-        {watch("integrationType.webRedirection") && (
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium">Webredirection URLs</h4>
-            {webRedirectionUrls.map((url, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Input
-                  value={url}
-                  onChange={(e) => updateWebRedirectionUrl(index, e.target.value)}
-                  placeholder="https://example.com/redirect"
-                  className="flex-1"
-                />
-                
-                <div className="flex items-center">
-                  {index === webRedirectionUrls.length - 1 ? (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={addWebRedirectionUrl}
+        <div className="border rounded-lg overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr>
+                <th className="w-10 text-center p-3 border-b border-r"></th>
+                <th className="p-3 text-left border-b border-r w-1/3">Integration Type</th>
+                <th className="p-3 text-left border-b">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {integrationType.map((type) => (
+                <FormField
+                  key={type.id}
+                  control={control}
+                  name={`integrationType.${type.id}`}
+                  render={({ field }) => (
+                    <tr className={`border-b ${field.value ? "bg-primary/5" : ""}`}>
+                      <td className="text-center p-3 border-r">
+                        <div className="flex items-center justify-center">
+                          <div 
+                            className={`w-5 h-5 rounded border flex items-center justify-center ${
+                              field.value ? "bg-primary border-primary text-white" : "border-gray-300"
+                            }`}
+                            onClick={() => field.onChange(!field.value)}
                           >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Add URL</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => removeWebRedirectionUrl(index)}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
+                            {field.value && <Check className="h-3 w-3" />}
+                          </div>
+                        </div>
+                      </td>
+                      <td 
+                        className="p-3 border-r font-medium cursor-pointer" 
+                        onClick={() => field.onChange(!field.value)}
+                      >
+                        {type.name}
+                      </td>
+                      <td className="p-3">
+                        {type.id === "webRedirection" && field.value && (
+                          <div className="space-y-2">
+                            {webRedirectionUrls.map((url, index) => (
+                              <div key={index} className="flex items-center gap-2">
+                                <Input
+                                  value={url}
+                                  onChange={(e) => updateWebRedirectionUrl(index, e.target.value)}
+                                  placeholder="Add Onemoney url integrated"
+                                  className="flex-1"
+                                />
+                                
+                                <div className="flex items-center">
+                                  {index === webRedirectionUrls.length - 1 ? (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            onClick={addWebRedirectionUrl}
+                                          >
+                                            <Plus className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Add URL</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  ) : (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => removeWebRedirectionUrl(index)}
+                                    >
+                                      <Trash className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {type.id === "sdk" && field.value && (
+                          <div className="space-y-2">
+                            {sdkVersions.map((version, index) => (
+                              <div key={index} className="flex items-center gap-2">
+                                <Input
+                                  value={version}
+                                  onChange={(e) => updateSdkVersion(index, e.target.value)}
+                                  placeholder="SDK type and version"
+                                  className="flex-1"
+                                />
+                                
+                                <div className="flex items-center">
+                                  {index === sdkVersions.length - 1 ? (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            onClick={addSdkVersion}
+                                          >
+                                            <Plus className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Add SDK Version</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  ) : (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => removeSdkVersion(index)}
+                                    >
+                                      <Trash className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {type.id === "assisted" && field.value && (
+                          <p className="text-sm text-muted-foreground py-1">
+                            {type.description}
+                          </p>
+                        )}
+                        
+                        {type.id === "detached" && field.value && (
+                          <p className="text-sm text-muted-foreground py-1">
+                            {type.description}
+                          </p>
+                        )}
+                      </td>
+                    </tr>
                   )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {watch("integrationType.sdk") && (
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium">SDK Versions</h4>
-            {sdkVersions.map((version, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Input
-                  value={version}
-                  onChange={(e) => updateSdkVersion(index, e.target.value)}
-                  placeholder="e.g., Android v2.1.0"
-                  className="flex-1"
                 />
-                
-                <div className="flex items-center">
-                  {index === sdkVersions.length - 1 ? (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={addSdkVersion}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Add SDK Version</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => removeSdkVersion(index)}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       
       <FormField
@@ -205,26 +238,26 @@ const IntegrationDetailsForm = ({ setShowCocreatedDevelopment }: IntegrationDeta
         render={({ field }) => (
           <FormItem>
             <FormLabel>Integration Mode</FormLabel>
-            <Select
-              onValueChange={(value) => {
-                field.onChange(value);
-                setShowCocreatedDevelopment(value === "Cocreated FIU" || value === "Cocreated TSP");
-              }}
-              defaultValue={field.value}
-            >
-              <FormControl>
+            <FormControl>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  setShowCocreatedDevelopment(value === "Cocreated FIU" || value === "Cocreated TSP");
+                }}
+                value={field.value}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select Integration Mode" />
                 </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {formFields.integrationDetails.fields[1].options?.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <SelectContent>
+                  {formFields.integrationDetails.fields[1].options?.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}
@@ -234,17 +267,18 @@ const IntegrationDetailsForm = ({ setShowCocreatedDevelopment }: IntegrationDeta
         control={control}
         name="consentRequestSMS"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-center justify-between">
-            <div className="space-y-0.5">
+          <FormItem>
+            <div className="space-y-0.5 mb-2">
               <FormLabel className="text-base">Consent request SMS</FormLabel>
               <FormDescription>
                 If Onemoney consent request SMS is to be enabled
               </FormDescription>
             </div>
             <FormControl>
-              <Switch
-                checked={field.value}
-                onCheckedChange={field.onChange}
+              <ToggleButtonGroup
+                options={["Yes", "No"]}
+                value={field.value ? "Yes" : "No"}
+                onChange={(value) => field.onChange(value === "Yes")}
               />
             </FormControl>
           </FormItem>

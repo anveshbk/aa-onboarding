@@ -15,16 +15,16 @@ import { format } from "date-fns";
 
 const TspDetailsForm = () => {
   const { control, setValue } = useFormContext();
-  const fields = formFields.tspDetails.fields;
-  
-  // Auto-fill request date with current date
-  useEffect(() => {
-    const currentDate = format(new Date(), 'dd-MMM-yyyy');
-    setValue('requestDate', currentDate);
-  }, [setValue]);
+  const fields = formFields.tspDetails.fields.filter(field => field.id !== "requestDate");
+  const currentDate = format(new Date(), 'dd-MMM-yyyy');
   
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold">TSP Details</h2>
+        <p className="text-sm text-muted-foreground">{currentDate}</p>
+      </div>
+      
       {fields.map((field) => (
         <FormField
           key={field.id}

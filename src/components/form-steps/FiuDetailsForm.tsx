@@ -18,15 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import {
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  FileUploadArea 
-} from "@/components/ui/file-upload-area";
+import { FileUploadArea } from "@/components/ui/file-upload-area";
+import { ToggleButtonGroup } from "@/components/ui/toggle-button-group";
 import formFields from "@/data/formFields.json";
 
 const FiuDetailsForm = () => {
@@ -36,9 +29,6 @@ const FiuDetailsForm = () => {
   const regulator = watch("regulator");
   const agreementExecuted = watch("agreementExecuted");
   
-  const [licenseMode, setLicenseMode] = useState<"link" | "file">("link");
-  const [agreementMode, setAgreementMode] = useState<"link" | "file">("link");
-  
   // Update license type options based on selected regulator
   const licenseTypeOptions = regulator 
     ? formFields.licenseTypeMap[regulator as keyof typeof formFields.licenseTypeMap] || []
@@ -46,51 +36,44 @@ const FiuDetailsForm = () => {
   
   return (
     <div className="space-y-6">
-      {fields.slice(0, 2).map((field) => (
-        <FormField
-          key={field.id}
-          control={control}
-          name={field.id}
-          render={({ field: formField }) => (
-            <FormItem>
-              <FormLabel>{field.name}</FormLabel>
-              {field.type === 'text' && (
-                <FormControl>
-                  <Input {...formField} />
-                </FormControl>
-              )}
-              
-              {field.type === 'dropdown' && (
-                <FormControl>
-                  <Select
-                    onValueChange={(value) => {
-                      formField.onChange(value);
-                      setValue("licenseType", ""); // Reset license type when regulator changes
-                    }}
-                    defaultValue={formField.value}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={`Select ${field.name}`} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {field.options?.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-              )}
-              
-              {field.description && (
-                <FormDescription>{field.description}</FormDescription>
-              )}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      ))}
+      <h2 className="text-xl font-semibold">FIU Details</h2>
+      
+      {/* FIU Registered Name */}
+      <FormField
+        control={control}
+        name="fiuRegisteredName"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>FIU registered name (as per license)</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      {/* Regulator Field - Use ToggleButtonGroup for small options */}
+      <FormField
+        control={control}
+        name="regulator"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Regulator</FormLabel>
+            <FormControl>
+              <ToggleButtonGroup
+                options={fields.find(f => f.id === "regulator")?.options || []}
+                value={field.value || ""}
+                onChange={(value) => {
+                  field.onChange(value);
+                  setValue("licenseType", ""); // Reset license type when regulator changes
+                }}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
       
       {/* License Type Field - Depends on Regulator */}
       <FormField
@@ -102,7 +85,7 @@ const FiuDetailsForm = () => {
             <FormControl>
               <Select
                 onValueChange={field.onChange}
-                defaultValue={field.value}
+                value={field.value}
                 disabled={!regulator}
               >
                 <SelectTrigger>
@@ -122,70 +105,21 @@ const FiuDetailsForm = () => {
         )}
       />
       
-      {/* License Copy Field - Support file or link */}
+      {/* License Copy Field - Using new FileUploadArea */}
       <FormField
         control={control}
         name="licenseCopy"
         render={({ field }) => (
           <FormItem>
             <FormLabel>License copy</FormLabel>
-            <Tabs 
-              defaultValue="link" 
-              onValueChange={(value) => setLicenseMode(value as "link" | "file")}
-              className="w-full"
-            >
-              <div className="flex justify-between items-center mb-2">
-                <TabsList>
-                  <TabsTrigger value="link">Link</TabsTrigger>
-                  <TabsTrigger value="file">Upload</TabsTrigger>
-                </TabsList>
-              </div>
-              
-              <TabsContent value="link" className="space-y-4">
-                <FormControl>
-                  <Input 
-                    placeholder="https://drive.google.com/..." 
-                    onChange={(e) => {
-                      field.onChange({url: e.target.value});
-                      if (e.target.value) {
-                        setValue("licenseCopyPassword", "");
-                      }
-                    }}
-                    value={field.value?.url || ""}
-                  />
-                </FormControl>
-                
-                {field.value?.url && (
-                  <FormField
-                    control={control}
-                    name="licenseCopyPassword"
-                    render={({ field: passwordField }) => (
-                      <FormItem>
-                        <FormLabel>Password (if required)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="If password protected then enter password or else leave it blank"
-                            {...passwordField}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                )}
-              </TabsContent>
-              
-              <TabsContent value="file">
-                <FormControl>
-                  <FileUploadArea
-                    onChange={(file) => {
-                      field.onChange({file});
-                      setValue("licenseCopyPassword", "");
-                    }}
-                    maxSize={5}
-                  />
-                </FormControl>
-              </TabsContent>
-            </Tabs>
+            <FormControl>
+              <FileUploadArea
+                onChange={field.onChange}
+                defaultValue={field.value}
+                maxSize={5}
+                placeholder="Insert license copy Drive link"
+              />
+            </FormControl>
             <FormDescription>Max 5MB</FormDescription>
             <FormMessage />
           </FormItem>
@@ -208,44 +142,55 @@ const FiuDetailsForm = () => {
       />
       
       {/* FIU CR ID Fields */}
-      {fields.slice(5, 7).map((field) => (
-        <FormField
-          key={field.id}
-          control={control}
-          name={field.id}
-          render={({ field: formField }) => (
-            <FormItem>
-              <FormLabel>{field.name}</FormLabel>
-              <FormControl>
-                <Input {...formField} />
-              </FormControl>
-              {field.description && (
-                <FormDescription>{field.description}</FormDescription>
-              )}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      ))}
+      <FormField
+        control={control}
+        name="fiuCrIdUat"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>FIU CR ID UAT</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormDescription>FIU ID as per Sahamati UAT CR</FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
       
-      {/* Agreement Executed Field */}
+      <FormField
+        control={control}
+        name="fiuCrIdProd"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>FIU CR ID Prod</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormDescription>FIU ID as per Sahamati Prod CR</FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      {/* Agreement Executed Field as toggle buttons */}
       <FormField
         control={control}
         name="agreementExecuted"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-            <div className="space-y-0.5">
+          <FormItem>
+            <div className="space-y-0.5 mb-2">
               <FormLabel className="text-base">Agreement Executed</FormLabel>
               <FormDescription>
                 If yes, please upload the agreement document (max 5MB)
               </FormDescription>
             </div>
             <FormControl>
-              <Switch
-                checked={field.value}
-                onCheckedChange={(value) => {
-                  field.onChange(value);
-                  if (!value) {
+              <ToggleButtonGroup
+                options={["Yes", "No"]}
+                value={field.value ? "Yes" : "No"}
+                onChange={(value) => {
+                  field.onChange(value === "Yes");
+                  if (value !== "Yes") {
                     setValue("agreementFile", null);
                   }
                 }}
@@ -263,63 +208,14 @@ const FiuDetailsForm = () => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Agreement Document</FormLabel>
-              <Tabs 
-                defaultValue="link" 
-                onValueChange={(value) => setAgreementMode(value as "link" | "file")}
-                className="w-full"
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <TabsList>
-                    <TabsTrigger value="link">Link</TabsTrigger>
-                    <TabsTrigger value="file">Upload</TabsTrigger>
-                  </TabsList>
-                </div>
-                
-                <TabsContent value="link" className="space-y-4">
-                  <FormControl>
-                    <Input 
-                      placeholder="https://drive.google.com/..." 
-                      onChange={(e) => {
-                        field.onChange({url: e.target.value});
-                        if (e.target.value) {
-                          setValue("agreementFilePassword", "");
-                        }
-                      }}
-                      value={field.value?.url || ""}
-                    />
-                  </FormControl>
-                  
-                  {field.value?.url && (
-                    <FormField
-                      control={control}
-                      name="agreementFilePassword"
-                      render={({ field: passwordField }) => (
-                        <FormItem>
-                          <FormLabel>Password (if required)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="If password protected then enter password or else leave it blank"
-                              {...passwordField}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                </TabsContent>
-                
-                <TabsContent value="file">
-                  <FormControl>
-                    <FileUploadArea
-                      onChange={(file) => {
-                        field.onChange({file});
-                        setValue("agreementFilePassword", "");
-                      }}
-                      maxSize={5}
-                    />
-                  </FormControl>
-                </TabsContent>
-              </Tabs>
+              <FormControl>
+                <FileUploadArea
+                  onChange={field.onChange}
+                  defaultValue={field.value}
+                  maxSize={5}
+                  placeholder="Insert agreement document Drive link"
+                />
+              </FormControl>
               <FormDescription>Max 5MB</FormDescription>
               <FormMessage />
             </FormItem>

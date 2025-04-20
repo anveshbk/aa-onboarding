@@ -26,12 +26,35 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash } from "lucide-react";
+import { Plus, Trash, AlertCircle } from "lucide-react";
+import { ToggleButtonGroup } from "@/components/ui/toggle-button-group";
 import { 
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group";
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import formFields from "@/data/formFields.json";
+
+// Get unique usecase categories from consent templates
+const getUsecaseCategories = () => {
+  const categories = new Set<string>();
+  
+  Object.values(formFields.consentTemplates).forEach(regulatorTemplates => {
+    Object.values(regulatorTemplates).forEach(template => {
+      if (Array.isArray(template)) {
+        template.forEach(t => {
+          if (t.usecaseCategory) categories.add(t.usecaseCategory);
+        });
+      } else if (template.usecaseCategory) {
+        categories.add(template.usecaseCategory);
+      }
+    });
+  });
+  
+  return Array.from(categories);
+};
 
 // Interface for duration inputs
 interface DurationInputProps {
@@ -39,36 +62,225 @@ interface DurationInputProps {
   onChange: (value: {number: string; unit: string;}) => void;
   units: string[];
   placeholder?: string;
+  maxValue?: number;
+  error?: string;
 }
 
-const DurationInput = ({ value, onChange, units, placeholder }: DurationInputProps) => {
+const DurationInput = ({ 
+  value, 
+  onChange, 
+  units, 
+  placeholder,
+  maxValue,
+  error
+}: DurationInputProps) => {
+  const handleNumberChange = (numValue: string) => {
+    // If number exceeds max value, cap it
+    if (maxValue && parseInt(numValue) > maxValue) {
+      numValue = maxValue.toString();
+    }
+    
+    onChange({ number: numValue, unit: value?.unit || units[0] });
+  };
+
   return (
-    <div className="flex gap-2">
-      <Input 
-        type="number"
-        min="1"
-        value={value?.number || ""}
-        onChange={(e) => onChange({ number: e.target.value, unit: value?.unit || units[0] })}
-        placeholder={placeholder || "Enter number"}
-        className="w-24"
-      />
-      <Select
-        value={value?.unit || units[0]}
-        onValueChange={(unit) => onChange({ number: value?.number || "", unit })}
-      >
-        <SelectTrigger className="w-28">
-          <SelectValue placeholder="Unit" />
-        </SelectTrigger>
-        <SelectContent>
-          {units.map((unit) => (
-            <SelectItem key={unit} value={unit}>
-              {unit}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <Input 
+          type="number"
+          min="1"
+          max={maxValue}
+          value={value?.number || ""}
+          onChange={(e) => handleNumberChange(e.target.value)}
+          placeholder={placeholder || "Enter number"}
+          className="w-24"
+        />
+        <Select
+          value={value?.unit || units[0]}
+          onValueChange={(unit) => onChange({ number: value?.number || "", unit })}
+        >
+          <SelectTrigger className="w-28">
+            <SelectValue placeholder="Unit" />
+          </SelectTrigger>
+          <SelectContent>
+            {units.map((unit) => (
+              <SelectItem key={unit} value={unit}>
+                {unit}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      {error && (
+        <p className="text-destructive text-sm flex items-center">
+          <AlertCircle className="h-3 w-3 mr-1" /> {error}
+        </p>
+      )}
     </div>
   );
+};
+
+// Component for frequency input with static "times" label
+const FrequencyInput = ({ 
+  value, 
+  onChange, 
+  units,
+  maxValue,
+  error
+}: Omit<DurationInputProps, 'placeholder'>) => {
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2 items-center">
+        <Input 
+          type="number"
+          min="1"
+          max={maxValue}
+          value={value?.number || ""}
+          onChange={(e) => onChange({ 
+            number: e.target.value, 
+            unit: value?.unit || units[0] 
+          })}
+          className="w-24"
+        />
+        <span className="text-sm font-medium">times</span>
+        <Select
+          value={value?.unit || units[0]}
+          onValueChange={(unit) => onChange({ 
+            number: value?.number || "", 
+            unit 
+          })}
+        >
+          <SelectTrigger className="w-28">
+            <SelectValue placeholder="Unit" />
+          </SelectTrigger>
+          <SelectContent>
+            {units.map((unit) => (
+              <SelectItem key={unit} value={unit}>
+                {unit}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      {error && (
+        <p className="text-destructive text-sm flex items-center">
+          <AlertCircle className="h-3 w-3 mr-1" /> {error}
+        </p>
+      )}
+    </div>
+  );
+};
+
+// Parse template strings like "31 times per month" to extract value and unit
+const parseFrequencyString = (frequencyStr: string): { number: string, unit: string } | null => {
+  if (!frequencyStr || frequencyStr === "NA") return null;
+  
+  const regex = /(\d+)\s+times?\s+per\s+(\w+)/i;
+  const match = frequencyStr.match(regex);
+  
+  if (match) {
+    return {
+      number: match[1],
+      unit: match[2].toLowerCase()
+    };
+  }
+  
+  return null;
+};
+
+// Parse period strings like "1 Month", "6 months", "20 years"
+const parsePeriodString = (periodStr: string): { number: string, unit: string } | null => {
+  if (!periodStr || periodStr === "NA") return null;
+  
+  // Handle special cases
+  if (periodStr.toLowerCase().includes("coterminous")) {
+    return {
+      number: "999", // Special value for coterminous
+      unit: "tenure"
+    };
+  }
+  
+  const regex = /(\d+)\s+(\w+)/i;
+  const match = periodStr.match(regex);
+  
+  if (match) {
+    let unit = match[2].toLowerCase();
+    // Convert to singular form if needed
+    if (unit.endsWith('s')) unit = unit.slice(0, -1);
+    
+    return {
+      number: match[1],
+      unit: unit
+    };
+  }
+  
+  return null;
+};
+
+// Function to get the appropriate template based on filters
+const getFilteredTemplate = (
+  regulator: string, 
+  purposeCode: string, 
+  usecaseCategory: string
+) => {
+  const templates = formFields.consentTemplates;
+  
+  // Check if there's a specific template for this regulator and purpose code
+  if (templates[regulator] && templates[regulator][purposeCode]) {
+    const regulatorTemplate = templates[regulator][purposeCode];
+    
+    // If it's an array, find the one matching the usecase category
+    if (Array.isArray(regulatorTemplate)) {
+      const matchingTemplate = regulatorTemplate.find(
+        t => t.usecaseCategory === usecaseCategory
+      );
+      if (matchingTemplate) return matchingTemplate;
+    } 
+    // If it's a single template and matches the usecase
+    else if (regulatorTemplate.usecaseCategory === usecaseCategory) {
+      return regulatorTemplate;
+    }
+  }
+  
+  // If not found, try the "All" regulator
+  if (templates["All"] && templates["All"][purposeCode]) {
+    const allTemplate = templates["All"][purposeCode];
+    
+    if (Array.isArray(allTemplate)) {
+      const matchingTemplate = allTemplate.find(
+        t => t.usecaseCategory === usecaseCategory
+      );
+      if (matchingTemplate) return matchingTemplate;
+    } 
+    else if (allTemplate.usecaseCategory === usecaseCategory) {
+      return allTemplate;
+    }
+  }
+  
+  return null;
+};
+
+// Get purpose codes based on regulator
+const getPurposeCodes = (regulator: string) => {
+  if (!regulator) return [];
+  
+  const templates = formFields.consentTemplates;
+  let codes: string[] = [];
+  
+  // Get purpose codes for the specific regulator
+  if (templates[regulator]) {
+    codes = Object.keys(templates[regulator]);
+  }
+  
+  // Add "All" regulator codes
+  if (templates["All"]) {
+    codes = [...codes, ...Object.keys(templates["All"])];
+  }
+  
+  // Remove duplicates
+  return [...new Set(codes)];
 };
 
 const ConsentParamItem = ({ 
@@ -86,355 +298,390 @@ const ConsentParamItem = ({
   setValue: any;
   regulator: string;
 }) => {
-  const paramFields = formFields.consentParameters.consentParamFields;
+  const usecaseCategory = watch(`consentParams.${index}.usecaseCategory`) || "";
+  const purposeCode = watch(`consentParams.${index}.purposeCode`) || "";
+  const fetchType = watch(`consentParams.${index}.fetchType`) || "Onetime";
   const consentTypes = watch(`consentParams.${index}.consentType`) || [];
   const fiTypes = watch(`consentParams.${index}.fiTypes`) || [];
-  const fetchType = watch(`consentParams.${index}.fetchType`);
-  const purposeCode = watch(`consentParams.${index}.purposeCode`);
   
-  // Filter purpose codes based on regulator
-  const getPurposeCodes = () => {
-    if (!regulator) return paramFields.find(f => f.id === 'purposeCode')?.options || [];
-    
-    const templates = formFields.consentTemplates;
-    let codes: string[] = [];
-    
-    // Get purpose codes for the specific regulator
-    if (templates[regulator]) {
-      codes = Object.keys(templates[regulator]);
-    }
-    
-    // Add "All" regulator codes
-    if (templates["All"]) {
-      codes = [...codes, ...Object.keys(templates["All"])];
-    }
-    
-    // Remove duplicates
-    return [...new Set(codes)];
-  };
+  // Validation errors
+  const [validationErrors, setValidationErrors] = useState<{
+    consentValidity?: string;
+    frequency?: string;
+    fiDataRange?: string;
+    dataLife?: string;
+  }>({});
   
-  // Get FI Types based on regulator and purpose code
-  const getFiTypes = () => {
-    if (!regulator || !purposeCode) return paramFields.find(f => f.id === 'fiTypes')?.options || [];
+  // Get filtered values based on current selections
+  const purposeCodes = getPurposeCodes(regulator);
+  const usecaseCategories = getUsecaseCategories();
+  
+  // Get the template that matches current filters
+  const currentTemplate = usecaseCategory && purposeCode 
+    ? getFilteredTemplate(regulator, purposeCode, usecaseCategory) 
+    : null;
+  
+  // Extract rules from the template
+  const allowedFiTypes = currentTemplate?.fiTypes || [];
+  const requiredFetchType = currentTemplate?.fetchType || null;
+  const allowedConsentTypes = currentTemplate?.consentType?.join(', ') || null;
+  
+  // Max values with parsed object structure
+  const maxFrequency = currentTemplate?.maxFrequency ? parseFrequencyString(currentTemplate.maxFrequency) : null;
+  const maxFiDataRange = currentTemplate?.maxFiDataRange ? parsePeriodString(currentTemplate.maxFiDataRange) : null;
+  const maxConsentValidity = currentTemplate?.maxConsentValidity ? parsePeriodString(currentTemplate.maxConsentValidity) : null;
+  const maxDataLife = currentTemplate?.maxDataLife ? parsePeriodString(currentTemplate.maxDataLife) : null;
+  
+  // Validate values when template or key value changes
+  useEffect(() => {
+    if (!currentTemplate) return;
     
-    const templates = formFields.consentTemplates;
-    let types: string[] = [];
+    const errors: any = {};
     
-    // Check if the purpose code exists for the regulator
-    if (templates[regulator] && templates[regulator][purposeCode]) {
-      const template = templates[regulator][purposeCode];
+    // Validate consent validity
+    const consentValidity = watch(`consentParams.${index}.consentValidityPeriod`);
+    if (consentValidity && maxConsentValidity) {
+      const currentUnit = consentValidity.unit.toLowerCase();
+      const maxUnit = maxConsentValidity.unit.toLowerCase();
       
-      // Handle both array and single item formats
-      if (Array.isArray(template)) {
-        // Combine fiTypes from all templates with this purpose code
-        template.forEach(t => {
-          types = [...types, ...t.fiTypes];
-        });
-      } else {
-        types = template.fiTypes;
+      // Simple validation - only works well for same units
+      if (currentUnit === maxUnit && 
+          parseInt(consentValidity.number) > parseInt(maxConsentValidity.number)) {
+        errors.consentValidity = `Maximum allowed is ${maxConsentValidity.number} ${maxConsentValidity.unit}`;
       }
     }
     
-    // Check if the purpose code exists for "All" regulators
-    if (templates["All"] && templates["All"][purposeCode]) {
-      const allTemplate = templates["All"][purposeCode];
-      
-      if (Array.isArray(allTemplate)) {
-        allTemplate.forEach(t => {
-          types = [...types, ...t.fiTypes];
-        });
-      } else {
-        types = [...types, ...allTemplate.fiTypes];
+    // Validate frequency
+    if (fetchType === "Periodic") {
+      const frequency = watch(`consentParams.${index}.dataFetchFrequency`);
+      if (frequency && maxFrequency) {
+        const currentUnit = frequency.unit.toLowerCase();
+        const maxUnit = maxFrequency.unit.toLowerCase();
+        
+        if (currentUnit === maxUnit && 
+            parseInt(frequency.number) > parseInt(maxFrequency.number)) {
+          errors.frequency = `Maximum allowed is ${maxFrequency.number} times per ${maxFrequency.unit}`;
+        }
       }
     }
     
-    // Remove duplicates
-    return [...new Set(types)];
-  };
-  
-  const handleConsentTypeChange = (type: string) => {
-    const currentTypes = [...consentTypes];
-    const typeIndex = currentTypes.indexOf(type);
-    
-    if (typeIndex > -1) {
-      currentTypes.splice(typeIndex, 1);
-    } else {
-      currentTypes.push(type);
+    // Validate FI data range
+    const fiDataRange = watch(`consentParams.${index}.fiDataRange`);
+    if (fiDataRange && maxFiDataRange) {
+      const currentUnit = fiDataRange.unit.toLowerCase();
+      const maxUnit = maxFiDataRange.unit.toLowerCase();
+      
+      if (currentUnit === maxUnit && 
+          parseInt(fiDataRange.number) > parseInt(maxFiDataRange.number)) {
+        errors.fiDataRange = `Maximum allowed is ${maxFiDataRange.number} ${maxFiDataRange.unit}`;
+      }
     }
     
-    setValue(`consentParams.${index}.consentType`, currentTypes);
-  };
-  
-  const handleFiTypeChange = (type: string) => {
-    const currentTypes = [...fiTypes];
-    const typeIndex = currentTypes.indexOf(type);
-    
-    if (typeIndex > -1) {
-      currentTypes.splice(typeIndex, 1);
-    } else {
-      currentTypes.push(type);
+    // Validate data life
+    const dataLife = watch(`consentParams.${index}.dataLife`);
+    if (dataLife && maxDataLife) {
+      const currentUnit = dataLife.unit.toLowerCase();
+      const maxUnit = maxDataLife.unit.toLowerCase();
+      
+      if (currentUnit === maxUnit && 
+          parseInt(dataLife.number) > parseInt(maxDataLife.number)) {
+        errors.dataLife = `Maximum allowed is ${maxDataLife.number} ${maxDataLife.unit}`;
+      }
     }
     
-    setValue(`consentParams.${index}.fiTypes`, currentTypes);
-  };
+    setValidationErrors(errors);
+  }, [currentTemplate, usecaseCategory, purposeCode, fetchType, watch, index]);
+  
+  // Set fetch type from template when purpose code changes
+  useEffect(() => {
+    if (currentTemplate?.fetchType) {
+      setValue(`consentParams.${index}.fetchType`, 
+        currentTemplate.fetchType === "ONE-TIME" ? "Onetime" : "Periodic"
+      );
+    }
+  }, [currentTemplate, setValue, index]);
   
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-md">Consent Template</CardTitle>
-        <Button 
-          type="button" 
-          variant="ghost" 
-          size="sm" 
+    <div className="border rounded-md">
+      <table className="w-full">
+        <tbody>
+          <tr className="border-b">
+            <td className="p-3 font-medium w-1/4 border-r bg-muted/30">Usecase category:</td>
+            <td className="p-3">
+              <FormField
+                control={control}
+                name={`consentParams.${index}.usecaseCategory`}
+                render={({ field }) => (
+                  <FormControl>
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // Reset dependent fields
+                        setValue(`consentParams.${index}.purposeCode`, "");
+                        setValue(`consentParams.${index}.fiTypes`, []);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select usecase category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {usecaseCategories.map(category => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                )}
+              />
+            </td>
+          </tr>
+          
+          <tr className="border-b">
+            <td className="p-3 font-medium border-r bg-muted/30">Purpose code</td>
+            <td className="p-3">
+              <FormField
+                control={control}
+                name={`consentParams.${index}.purposeCode`}
+                render={({ field }) => (
+                  <FormControl>
+                    <ToggleButtonGroup
+                      options={purposeCodes}
+                      value={field.value || ""}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        // Reset dependent fields
+                        setValue(`consentParams.${index}.fiTypes`, []);
+                      }}
+                    />
+                  </FormControl>
+                )}
+              />
+            </td>
+          </tr>
+          
+          <tr className="border-b">
+            <td className="p-3 font-medium border-r bg-muted/30">Purpose text</td>
+            <td className="p-3">
+              <FormField
+                control={control}
+                name={`consentParams.${index}.purposeText`}
+                render={({ field }) => (
+                  <FormControl>
+                    <Input {...field} placeholder="Enter purpose text" />
+                  </FormControl>
+                )}
+              />
+            </td>
+          </tr>
+          
+          <tr className="border-b">
+            <td className="p-3 font-medium border-r bg-muted/30">Consent validity period</td>
+            <td className="p-3">
+              <FormField
+                control={control}
+                name={`consentParams.${index}.consentValidityPeriod`}
+                render={({ field }) => (
+                  <FormControl>
+                    <DurationInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      units={["Day", "Month", "Year"]}
+                      maxValue={maxConsentValidity?.number ? parseInt(maxConsentValidity.number) : undefined}
+                      error={validationErrors.consentValidity}
+                    />
+                  </FormControl>
+                )}
+              />
+            </td>
+          </tr>
+          
+          <tr className="border-b">
+            <td className="p-3 font-medium border-r bg-muted/30">Fetch type</td>
+            <td className="p-3">
+              <FormField
+                control={control}
+                name={`consentParams.${index}.fetchType`}
+                render={({ field }) => (
+                  <FormControl>
+                    <ToggleButtonGroup
+                      options={["Onetime", "Periodic"]}
+                      value={field.value || "Onetime"}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                )}
+              />
+              
+              {requiredFetchType && (
+                <p className="text-sm text-amber-600 mt-1 flex items-center">
+                  <AlertCircle className="h-3 w-3 mr-1" /> 
+                  Required fetch type: {requiredFetchType === "ONE-TIME" ? "Onetime" : "Periodic"}
+                </p>
+              )}
+            </td>
+          </tr>
+          
+          <tr className="border-b">
+            <td className="p-3 font-medium border-r bg-muted/30">FI type</td>
+            <td className="p-3">
+              <FormField
+                control={control}
+                name={`consentParams.${index}.fiTypes`}
+                render={({ field }) => (
+                  <FormControl>
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        {allowedFiTypes.map((type) => (
+                          <div key={type} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`fiTypes-${type}-${index}`}
+                              checked={field.value?.includes(type)}
+                              onCheckedChange={(checked) => {
+                                const newValues = [...(field.value || [])];
+                                
+                                if (checked) {
+                                  if (!newValues.includes(type)) {
+                                    newValues.push(type);
+                                  }
+                                } else {
+                                  const typeIndex = newValues.indexOf(type);
+                                  if (typeIndex > -1) {
+                                    newValues.splice(typeIndex, 1);
+                                  }
+                                }
+                                
+                                field.onChange(newValues);
+                              }}
+                            />
+                            <label
+                              htmlFor={`fiTypes-${type}-${index}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {type}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {allowedFiTypes.length === 0 && usecaseCategory && purposeCode && (
+                        <p className="text-sm text-muted-foreground italic">
+                          Select a valid combination of usecase category and purpose code to see allowed FI types
+                        </p>
+                      )}
+                    </div>
+                  </FormControl>
+                )}
+              />
+            </td>
+          </tr>
+          
+          <tr className="border-b">
+            <td className="p-3 font-medium border-r bg-muted/30">Consent type</td>
+            <td className="p-3">
+              <FormField
+                control={control}
+                name={`consentParams.${index}.consentType`}
+                render={({ field }) => (
+                  <FormControl>
+                    <ToggleButtonGroup
+                      options={["Profile", "Summary", "Transactions"]}
+                      value={field.value || []}
+                      onChange={field.onChange}
+                      multiple={true}
+                    />
+                  </FormControl>
+                )}
+              />
+              
+              {allowedConsentTypes && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Allowed: {allowedConsentTypes}
+                </p>
+              )}
+            </td>
+          </tr>
+          
+          {fetchType === "Periodic" && (
+            <tr className="border-b">
+              <td className="p-3 font-medium border-r bg-muted/30">Frequency</td>
+              <td className="p-3">
+                <FormField
+                  control={control}
+                  name={`consentParams.${index}.dataFetchFrequency`}
+                  render={({ field }) => (
+                    <FormControl>
+                      <FrequencyInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        units={["Day", "Month", "Year"]}
+                        maxValue={maxFrequency?.number ? parseInt(maxFrequency.number) : undefined}
+                        error={validationErrors.frequency}
+                      />
+                    </FormControl>
+                  )}
+                />
+              </td>
+            </tr>
+          )}
+          
+          <tr className="border-b">
+            <td className="p-3 font-medium border-r bg-muted/30">FI data range</td>
+            <td className="p-3">
+              <FormField
+                control={control}
+                name={`consentParams.${index}.fiDataRange`}
+                render={({ field }) => (
+                  <FormControl>
+                    <DurationInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      units={["Day", "Month", "Year"]}
+                      maxValue={maxFiDataRange?.number ? parseInt(maxFiDataRange.number) : undefined}
+                      error={validationErrors.fiDataRange}
+                    />
+                  </FormControl>
+                )}
+              />
+            </td>
+          </tr>
+          
+          <tr>
+            <td className="p-3 font-medium border-r bg-muted/30">Data life</td>
+            <td className="p-3">
+              <FormField
+                control={control}
+                name={`consentParams.${index}.dataLife`}
+                render={({ field }) => (
+                  <FormControl>
+                    <DurationInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      units={["Day", "Month", "Year"]}
+                      maxValue={maxDataLife?.number ? parseInt(maxDataLife.number) : undefined}
+                      error={validationErrors.dataLife}
+                    />
+                  </FormControl>
+                )}
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div className="p-3 border-t flex justify-end">
+        <Button
+          type="button"
+          variant="destructive"
+          size="sm"
           onClick={onRemove}
         >
-          <Trash className="h-4 w-4 text-destructive" />
+          <Trash className="h-4 w-4 mr-2" /> Remove template
         </Button>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Usecase details */}
-        <FormField
-          control={control}
-          name={`consentParams.${index}.usecaseDetails`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Usecase details</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Details of the usecase where AA is integrated" />
-              </FormControl>
-              <FormDescription>Details of the usecase where AA is integrated</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        {/* Purpose Code - dependent on regulator */}
-        <FormField
-          control={control}
-          name={`consentParams.${index}.purposeCode`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Purpose Code</FormLabel>
-              <Select
-                onValueChange={(value) => {
-                  field.onChange(value);
-                  // Reset dependent fields
-                  setValue(`consentParams.${index}.purposeText`, value);
-                  setValue(`consentParams.${index}.fiTypes`, []);
-                }}
-                defaultValue={field.value}
-                disabled={!regulator}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={regulator ? "Select Purpose Code" : "Select Regulator first"} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {getPurposeCodes().map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormDescription>As per ReBIT</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        {/* Purpose Text - should match purpose code */}
-        <FormField
-          control={control}
-          name={`consentParams.${index}.purposeText`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Purpose Text</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Purpose Text" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {paramFields.find(f => f.id === 'purposeText')?.options?.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormDescription>Displayed on consent screen</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        {/* Consent Validity Period - with duration input */}
-        <FormField
-          control={control}
-          name={`consentParams.${index}.consentValidityPeriod`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Consent Validity Period</FormLabel>
-              <FormControl>
-                <DurationInput
-                  value={field.value}
-                  onChange={field.onChange}
-                  units={paramFields.find(f => f.id === 'consentValidityPeriod')?.units || ["Day", "Month", "Year"]}
-                  placeholder="Duration"
-                />
-              </FormControl>
-              <FormDescription>Duration of consent validity</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        {/* Fetch Type - as toggle */}
-        <FormField
-          control={control}
-          name={`consentParams.${index}.fetchType`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Fetch Type</FormLabel>
-              <div className="flex items-center space-x-4">
-                <FormControl>
-                  <ToggleGroup
-                    type="single"
-                    defaultValue={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <ToggleGroupItem value="Onetime">Onetime</ToggleGroupItem>
-                    <ToggleGroupItem value="Periodic">Periodic</ToggleGroupItem>
-                  </ToggleGroup>
-                </FormControl>
-                {field.value && (
-                  <span className="text-sm text-muted-foreground">Selected: {field.value}</span>
-                )}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        {/* FI Types - multiselect */}
-        <FormItem>
-          <FormLabel>FI Types</FormLabel>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            {getFiTypes().map((type) => (
-              <div key={type} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`fiTypes-${type}-${index}`}
-                  checked={fiTypes.includes(type)}
-                  onCheckedChange={() => handleFiTypeChange(type)}
-                />
-                <label
-                  htmlFor={`fiTypes-${type}-${index}`}
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  {type}
-                </label>
-              </div>
-            ))}
-          </div>
-          <FormDescription>Financial Information Types</FormDescription>
-          <FormMessage />
-        </FormItem>
-        
-        {/* Consent Type - multiselect */}
-        <FormItem>
-          <FormLabel>Consent Type</FormLabel>
-          <div className="mt-2">
-            {paramFields.find(f => f.id === 'consentType')?.options?.map((option) => (
-              <div key={option} className="flex items-center space-x-2 mb-2">
-                <Checkbox
-                  id={`consentType-${option}-${index}`}
-                  checked={consentTypes.includes(option)}
-                  onCheckedChange={() => handleConsentTypeChange(option)}
-                />
-                <label
-                  htmlFor={`consentType-${option}-${index}`}
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  {option}
-                </label>
-              </div>
-            ))}
-          </div>
-          <FormMessage />
-        </FormItem>
-        
-        {/* Data Fetch Frequency - conditional display based on fetch type */}
-        {fetchType === "Periodic" && (
-          <FormField
-            control={control}
-            name={`consentParams.${index}.dataFetchFrequency`}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Data Fetch Frequency</FormLabel>
-                <FormControl>
-                  <DurationInput
-                    value={field.value}
-                    onChange={field.onChange}
-                    units={paramFields.find(f => f.id === 'dataFetchFrequency')?.units || ["Hour", "Day", "Month", "Year"]}
-                    placeholder="Frequency"
-                  />
-                </FormControl>
-                <FormDescription>Frequency of data fetch</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-        
-        {/* FI Data Range */}
-        <FormField
-          control={control}
-          name={`consentParams.${index}.fiDataRange`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>FI Data Range</FormLabel>
-              <FormControl>
-                <DurationInput
-                  value={field.value}
-                  onChange={field.onChange}
-                  units={paramFields.find(f => f.id === 'fiDataRange')?.units || ["Day", "Month", "Year"]}
-                  placeholder="Range"
-                />
-              </FormControl>
-              <FormDescription>Duration of data to fetch</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        {/* Data Life */}
-        <FormField
-          control={control}
-          name={`consentParams.${index}.dataLife`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Data Life</FormLabel>
-              <FormControl>
-                <DurationInput
-                  value={field.value}
-                  onChange={field.onChange}
-                  units={paramFields.find(f => f.id === 'dataLife')?.units || ["Day", "Month", "Year"]}
-                  placeholder="Life"
-                />
-              </FormControl>
-              <FormDescription>Duration data will be available</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
@@ -445,12 +692,12 @@ const ConsentParametersForm = () => {
   
   const addConsentParam = () => {
     const newParam = {
-      usecaseDetails: "",
+      usecaseCategory: "",
       purposeCode: "",
       purposeText: "",
       consentValidityPeriod: { number: "", unit: "Day" },
       fetchType: "Onetime",
-      consentType: ["Profile"],
+      consentType: [],
       fiTypes: [],
       dataFetchFrequency: { number: "", unit: "Day" },
       fiDataRange: { number: "", unit: "Day" },
@@ -468,20 +715,32 @@ const ConsentParametersForm = () => {
   
   return (
     <div className="space-y-6">
+      <h2 className="text-xl font-semibold">Consent Parameters</h2>
+      
       <FormField
         control={control}
         name="consentParams"
         render={() => (
           <FormItem>
             <div className="space-y-4">
+              {!regulator && (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    Please select a regulator in the FIU Details section before configuring consent parameters.
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               {consentParams.length === 0 ? (
-                <p className="text-sm text-muted-foreground italic">No consent parameters defined yet</p>
+                <p className="text-sm text-muted-foreground italic">No consent templates defined yet</p>
               ) : (
                 <Accordion type="single" collapsible className="w-full">
                   {consentParams.map((param, index) => (
                     <AccordionItem key={index} value={`item-${index}`}>
                       <AccordionTrigger>
-                        {param.usecaseDetails || `Consent Template ${index + 1}`}
+                        {param.usecaseCategory ? 
+                          `${param.usecaseCategory} - PC: ${param.purposeCode}` : 
+                          `Consent Template ${index + 1}`}
                       </AccordionTrigger>
                       <AccordionContent>
                         <ConsentParamItem
@@ -503,6 +762,7 @@ const ConsentParametersForm = () => {
                 variant="outline" 
                 onClick={addConsentParam}
                 className="mt-4 w-full"
+                disabled={!regulator}
               >
                 <Plus className="h-4 w-4 mr-2" /> Add Consent Template
               </Button>

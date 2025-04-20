@@ -5,24 +5,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import StepIndicator from "@/components/StepIndicator";
-import BasicInfoForm from "@/components/form-steps/BasicInfoForm";
-import LicenseDetailsForm from "@/components/form-steps/LicenseDetailsForm";
-import UserJourneyForm from "@/components/form-steps/UserJourneyForm";
+import TspDetailsForm from "@/components/form-steps/TspDetailsForm";
+import FiuDetailsForm from "@/components/form-steps/FiuDetailsForm";
 import SpocDetailsForm from "@/components/form-steps/SpocDetailsForm";
 import IntegrationDetailsForm from "@/components/form-steps/IntegrationDetailsForm";
-import ConsentSettingsForm from "@/components/form-steps/ConsentSettingsForm";
-import UrlWhitelistingForm from "@/components/form-steps/UrlWhitelistingForm";
+import UserJourneySettingsForm from "@/components/form-steps/UserJourneySettingsForm";
 import ConsentParametersForm from "@/components/form-steps/ConsentParametersForm";
 import CocreatedDevelopmentForm from "@/components/form-steps/CocreatedDevelopmentForm";
 import formFields from "@/data/formFields.json";
-import { BasicInfoSchema } from "@/validation/basicInfoSchema";
-import { LicenseDetailsSchema } from "@/validation/licenseDetailsSchema";
-import { UserJourneySchema } from "@/validation/userJourneySchema";
+import { TspDetailsSchema } from "@/validation/tspDetailsSchema";
+import { FiuDetailsSchema } from "@/validation/fiuDetailsSchema";
 import { SpocDetailsSchema } from "@/validation/spocDetailsSchema";
 import { IntegrationDetailsSchema } from "@/validation/integrationDetailsSchema";
-import { ConsentSettingsSchema } from "@/validation/consentSettingsSchema";
-import { UrlWhitelistingSchema } from "@/validation/urlWhitelistingSchema";
+import { UserJourneySettingsSchema } from "@/validation/userJourneySettingsSchema";
 import { ConsentParametersSchema } from "@/validation/consentParametersSchema";
 import { CocreatedDevelopmentSchema } from "@/validation/cocreatedDevelopmentSchema";
 
@@ -36,22 +33,19 @@ type StepConfig = {
 const FormWizard = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<any>({});
+  const [showCocreatedDevelopment, setShowCocreatedDevelopment] = useState(false);
   
-  const steps: StepConfig[] = [
+  // Create steps dynamically, excluding conditional steps initially
+  const baseSteps: StepConfig[] = [
     {
-      title: formFields.basicInfo.title,
-      component: <BasicInfoForm />,
-      validationSchema: BasicInfoSchema,
+      title: formFields.tspDetails.title,
+      component: <TspDetailsForm />,
+      validationSchema: TspDetailsSchema,
     },
     {
-      title: formFields.licenseDetails.title,
-      component: <LicenseDetailsForm />,
-      validationSchema: LicenseDetailsSchema,
-    },
-    {
-      title: formFields.userJourney.title,
-      component: <UserJourneyForm />,
-      validationSchema: UserJourneySchema,
+      title: formFields.fiuDetails.title,
+      component: <FiuDetailsForm />,
+      validationSchema: FiuDetailsSchema,
     },
     {
       title: formFields.spocDetails.title,
@@ -61,31 +55,42 @@ const FormWizard = () => {
     },
     {
       title: formFields.integrationDetails.title,
-      component: <IntegrationDetailsForm />,
+      component: <IntegrationDetailsForm setShowCocreatedDevelopment={setShowCocreatedDevelopment} />,
       validationSchema: IntegrationDetailsSchema,
     },
     {
-      title: formFields.consentSettings.title,
-      component: <ConsentSettingsForm />,
-      validationSchema: ConsentSettingsSchema,
-    },
-    {
-      title: formFields.urlWhitelisting.title,
-      component: <UrlWhitelistingForm />,
-      validationSchema: UrlWhitelistingSchema,
+      title: formFields.userJourneySettings.title,
+      component: <UserJourneySettingsForm />,
+      validationSchema: UserJourneySettingsSchema,
     },
     {
       title: formFields.consentParameters.title,
       component: <ConsentParametersForm />,
       validationSchema: ConsentParametersSchema,
-    },
-    {
-      title: formFields.cocreatedDevelopment.title,
-      description: formFields.cocreatedDevelopment.description,
-      component: <CocreatedDevelopmentForm />,
-      validationSchema: CocreatedDevelopmentSchema,
-    },
+    }
   ];
+  
+  // Add conditional step if needed
+  useEffect(() => {
+    if (formData.integrationMode === "Cocreated FIU" || formData.integrationMode === "Cocreated TSP") {
+      setShowCocreatedDevelopment(true);
+    } else {
+      setShowCocreatedDevelopment(false);
+    }
+  }, [formData.integrationMode]);
+  
+  // Get the final steps array based on conditions
+  const steps = showCocreatedDevelopment 
+    ? [
+        ...baseSteps, 
+        {
+          title: formFields.cocreatedDevelopment.title,
+          description: formFields.cocreatedDevelopment.description,
+          component: <CocreatedDevelopmentForm />,
+          validationSchema: CocreatedDevelopmentSchema,
+        }
+      ]
+    : baseSteps;
 
   const currentValidationSchema = steps[currentStep].validationSchema;
   const methods = useForm({
@@ -131,6 +136,8 @@ const FormWizard = () => {
     alert("Onboarding form submitted successfully!");
   };
 
+  const progressPercentage = ((currentStep + 1) / steps.length) * 100;
+
   return (
     <div className="container mx-auto py-8 px-4 onemoney-form">
       <Card className="mb-8">
@@ -152,6 +159,8 @@ const FormWizard = () => {
             steps={steps.map(step => step.title)} 
             currentStep={currentStep}
           />
+          
+          <Progress value={progressPercentage} className="mt-4" />
         </div>
       </Card>
 

@@ -15,16 +15,16 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep }) => 
           <React.Fragment key={index}>
             <div className="flex flex-col items-center">
               <div
-                className={`step-indicator ${
+                className={`flex items-center justify-center w-8 h-8 rounded-full border text-sm font-medium ${
                   index < currentStep
-                    ? "completed"
+                    ? "bg-primary text-white border-primary"
                     : index === currentStep
-                    ? "active"
-                    : "pending"
+                    ? "border-primary text-primary"
+                    : "border-gray-300 text-gray-500"
                 }`}
               >
                 {index < currentStep ? (
-                  <Check size={16} />
+                  <Check className="h-4 w-4" />
                 ) : (
                   <span>{index + 1}</span>
                 )}
@@ -36,8 +36,8 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep }) => 
             
             {index < steps.length - 1 && (
               <div
-                className={`step-connector ${
-                  index < currentStep ? "active" : ""
+                className={`h-0.5 flex-1 mx-2 ${
+                  index < currentStep ? "bg-primary" : "bg-gray-200"
                 }`}
               />
             )}

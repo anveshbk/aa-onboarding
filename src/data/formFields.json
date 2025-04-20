@@ -1,21 +1,20 @@
 
 {
-  "basicInfo": {
-    "title": "Basic Information",
+  "tspDetails": {
+    "title": "TSP Details",
     "fields": [
       {
         "id": "tspName",
         "name": "Name of TSP",
         "type": "text",
         "description": "",
-        "required": true
+        "required": false
       },
       {
         "id": "requestDate",
         "name": "Request Date (dd-mmm-yyyy)",
         "type": "date",
-        "description": "Should be today's date autofilled, and cannot be changed",
-        "required": true,
+        "required": false,
         "disabled": true
       },
       {
@@ -23,41 +22,50 @@
         "name": "Requested By",
         "type": "text",
         "description": "",
-        "required": true
+        "required": false
       },
+      {
+        "id": "tspSpocEmail",
+        "name": "TSP SPOC Email",
+        "type": "text",
+        "description": "Will be in cc in all FIU correspondence from Onemoney as required",
+        "required": false
+      }
+    ]
+  },
+  "fiuDetails": {
+    "title": "FIU Details",
+    "fields": [
       {
         "id": "fiuRegisteredName",
         "name": "FIU registered name (as per license)",
         "type": "text",
         "description": "",
-        "required": true
-      }
-    ]
-  },
-  "licenseDetails": {
-    "title": "FIU Regulatory License Details",
-    "fields": [
+        "required": false
+      },
       {
         "id": "regulator",
         "name": "Regulator",
         "type": "dropdown",
         "options": ["RBI", "PFRDA", "IRDAI", "SEBI"],
         "description": "",
-        "required": true
+        "required": false
       },
       {
         "id": "licenseType",
         "name": "License Type",
-        "type": "text",
+        "type": "dropdown",
+        "options": [],
         "description": "",
-        "required": true
+        "required": false,
+        "dependsOn": "regulator"
       },
       {
         "id": "licenseCopy",
         "name": "License copy",
-        "type": "file",
+        "type": "fileOrLink",
         "description": "Max 5MB",
-        "required": true,
+        "required": false,
         "validation": {
           "maxSize": 5
         }
@@ -67,83 +75,73 @@
         "name": "License No. (As per certificate)",
         "type": "text",
         "description": "",
-        "required": true
-      }
-    ]
-  },
-  "userJourney": {
-    "title": "User Journey Details",
-    "fields": [
-      {
-        "id": "userJourneyVideo",
-        "name": "User journey video (Drive link)",
-        "type": "fileOrLink",
-        "description": "File upload max 5MB, if link then we should ask for password",
-        "required": true,
-        "validation": {
-          "maxSize": 5
-        }
-      },
-      {
-        "id": "agreementExecuted",
-        "name": "Agreement Executed",
-        "type": "boolean",
-        "description": "If yes upload option max 5MB",
-        "required": true
-      },
-      {
-        "id": "consentRequestSMS",
-        "name": "Consent request SMS",
-        "type": "boolean",
-        "description": "If Onemoney consent request SMS is to be enabled",
-        "required": true
+        "required": false
       },
       {
         "id": "fiuCrIdUat",
         "name": "FIU CR ID UAT",
         "type": "text",
         "description": "FIU ID as per Sahamati UAT CR",
-        "required": true
+        "required": false
       },
       {
         "id": "fiuCrIdProd",
         "name": "FIU CR ID Prod",
         "type": "text",
         "description": "FIU ID as per Sahamati Prod CR",
-        "required": true
+        "required": false
+      },
+      {
+        "id": "agreementExecuted",
+        "name": "Agreement Executed",
+        "type": "boolean",
+        "description": "If yes, please upload the agreement document (max 5MB)",
+        "required": false,
+        "noBorder": true
+      },
+      {
+        "id": "agreementFile",
+        "name": "Agreement Document",
+        "type": "fileOrLink",
+        "description": "Max 5MB",
+        "required": false,
+        "validation": {
+          "maxSize": 5
+        }
       }
     ]
   },
   "spocDetails": {
     "title": "FIU SPOC Details",
-    "description": "This should be a table",
+    "description": "Please provide contact details for each type of SPOC (Single Point of Contact).",
     "fields": [
       {
-        "id": "spocTable",
-        "type": "table",
-        "headers": ["SPOC Type", "Name", "Designation", "Email", "Mobile Number", "Description"],
-        "rows": [
-          {
-            "spocType": "TSP SPOC (Individual email)",
-            "description": "Will be in cc in all FIU correspondence from Onemoney as required"
-          },
-          {
-            "spocType": "FIU SPOC (Individual email)",
-            "description": "Will be in to for all FIU conversation and must be senior enough as sensitive info like keys etc will be shared"
-          },
-          {
-            "spocType": "FIU Escalation SPOC (Individual email)",
-            "description": "Incase if there is any escalation"
-          },
-          {
-            "spocType": "RBI SPOC (FIU)",
-            "description": "Incase RBI anytime requested to share SPOC details then this will be shared"
-          },
-          {
-            "spocType": "Grievance SPOC (FIU)",
-            "description": "Incase any grievances received from end customer to AA then we will be reaching out to this SPOC"
-          }
-        ]
+        "id": "fiuSpoc",
+        "name": "FIU SPOC (Individual email)",
+        "type": "contact",
+        "description": "Will be in to for all FIU conversation and must be senior enough as sensitive info like keys etc will be shared",
+        "required": false
+      },
+      {
+        "id": "fiuEscalationSpoc",
+        "name": "FIU Escalation SPOC (Individual email)",
+        "type": "contact",
+        "description": "Incase if there is any escalation",
+        "required": false
+      },
+      {
+        "id": "rbiSpoc",
+        "name": "RBI SPOC (FIU)",
+        "type": "contact",
+        "description": "Incase RBI anytime requested to share SPOC details then this will be shared",
+        "required": false
+      },
+      {
+        "id": "grievanceSpoc",
+        "name": "Grievance SPOC (FIU)",
+        "type": "contact",
+        "description": "Incase any grievances received from end customer to AA then we will be reaching out to this SPOC",
+        "required": false
       }
     ]
   },
@@ -159,13 +157,13 @@
             "id": "webRedirection",
             "name": "Webredirection",
             "type": "boolean",
-            "description": "Add Onemoney url integrated. if more than one then use ;"
+            "description": "Add Onemoney url integrated"
           },
           {
             "id": "sdk",
             "name": "SDK",
             "type": "boolean",
-            "description": "SDK type and version. If more than one use ;"
+            "description": "SDK type and version"
           },
           {
             "id": "assisted",
@@ -179,27 +177,47 @@
             "type": "boolean",
             "description": "If SMS is sent to the customer for DIY journey"
           }
-        ]
+        ],
+        "required": true
       },
       {
         "id": "integrationMode",
         "name": "Integration Mode",
         "type": "dropdown",
         "options": ["Standard", "Custom", "Cocreated FIU", "Cocreated TSP"],
-        "description": "If custom or cocreated integration ask for Figma URL",
-        "required": true
+        "description": "",
+        "required": false
+      },
+      {
+        "id": "consentRequestSMS",
+        "name": "Consent request SMS",
+        "type": "boolean",
+        "description": "If Onemoney consent request SMS is to be enabled",
+        "required": false,
+        "noBorder": true
       }
     ]
   },
-  "consentSettings": {
-    "title": "Consent Settings",
+  "userJourneySettings": {
+    "title": "User Journey Configurations",
     "fields": [
       {
-        "id": "title",
-        "name": "Title",
-        "type": "text",
-        "description": "",
-        "required": true
+        "id": "userJourneyVideo",
+        "name": "User journey video (Drive link)",
+        "type": "fileOrLink",
+        "description": "File upload max 5MB, if link then we should ask for password",
+        "required": false,
+        "validation": {
+          "maxSize": 5
+        }
+      },
+      {
+        "id": "whitelistedUrls",
+        "name": "URLs whitelisting",
+        "type": "multipleInputs",
+        "inputType": "url",
+        "description": "FIU URL where Onemoney is redirected (if multiple urls then all must be added)",
+        "required": false
       },
       {
         "id": "consentRequired",
@@ -207,55 +225,72 @@
         "type": "dropdown",
         "options": ["Single", "Dual", "Multiple"],
         "description": "If lending, monitoring, collections etc multiple are used",
-        "required": true
+        "required": false
       },
       {
         "id": "accountTypeFilter",
         "name": "Account type filter",
         "type": "boolean",
         "description": "Only savings / current account required especially for CASA this is applicable",
-        "required": true
+        "required": false,
+        "noBorder": true
       },
       {
         "id": "fipSelectionInHostApp",
         "name": "FIP selection in host app",
         "type": "boolean",
         "description": "If FIP selection happens in hostapp then is there any max limit in the no. of FIPs that customer can choose on host app",
-        "required": true
+        "required": false,
+        "noBorder": true
+      },
+      {
+        "id": "maxFipLimit",
+        "name": "Max FIPs Limit",
+        "type": "number",
+        "description": "Maximum number of FIPs that customer can choose on host app",
+        "required": false
       },
       {
         "id": "singleFipMultiFip",
         "name": "Single FIP / Multi FIP",
-        "type": "dropdown",
+        "type": "toggle",
         "options": ["Single", "Multi"],
         "description": "",
-        "required": true
+        "required": false
       },
       {
         "id": "accountSelectionType",
         "name": "Account selection type",
-        "type": "dropdown",
+        "type": "toggle",
         "options": ["Single", "Multi", "Unique"],
         "description": "",
-        "required": true
+        "required": false
       },
       {
         "id": "targetedAutoDiscovery",
         "name": "Targeted auto discovery",
         "type": "boolean",
         "description": "This is applicable only for PFM and Wealth Management usecase (101 and 102).",
-        "required": true
+        "required": false,
+        "noBorder": true
+      },
+      {
+        "id": "targetedDiscoveryDetails",
+        "name": "Targeted Discovery Details",
+        "type": "text",
+        "description": "List of FIP IDs or top number of banks required",
+        "required": false
       },
       {
         "id": "onemoneyConsentRequestMode",
         "name": "Onemoney Consent request mode",
-        "type": "dropdown",
+        "type": "toggle",
         "options": [
           "In redirection URL",
           "Only if accounts available for consent"
         ],
         "description": "",
-        "required": true
+        "required": false
       },
       {
         "id": "consentAccountsFlow",
@@ -267,7 +302,7 @@
           "FIP passed from hostapp and Add new accounts on Onemoney"
         ],
         "description": "",
-        "required": true
+        "required": false
       },
       {
         "id": "consentAccountMode",
@@ -275,42 +310,49 @@
         "type": "dropdown",
         "options": ["Per Account", "Per FIP", "Per FI Type", "Per Journey"],
         "description": "",
-        "required": true
+        "required": false
       },
       {
         "id": "consentApprovalMode",
         "name": "Consent Approval Mode",
-        "type": "dropdown",
+        "type": "toggle",
         "options": ["Approve all/Reject all", "Approve Mandatory+[Optional]"],
         "description": "",
-        "required": true
+        "required": false
       },
       {
         "id": "mobileVerified",
         "name": "Is mobile no. sent to Onemoney verified by host app",
         "type": "boolean",
         "description": "Kindly confirm the verification procedure in details",
-        "required": true
+        "required": false,
+        "noBorder": true
+      },
+      {
+        "id": "verificationProcedure",
+        "name": "",
+        "type": "text",
+        "description": "Describe the verification procedure in detail",
+        "required": false
       },
       {
         "id": "fiuLogoVisible",
         "name": "FIU logo visible on Onemoney to customer",
         "type": "boolean",
         "description": "Not applicable for LSP journeys",
-        "required": true
-      }
-    ]
-  },
-  "urlWhitelisting": {
-    "title": "URLs Whitelisting",
-    "fields": [
+        "required": false,
+        "noBorder": true
+      },
       {
-        "id": "whitelistedUrls",
-        "name": "URLs whitelisting",
-        "type": "multipleInputs",
-        "inputType": "url",
-        "description": "FIU URL where Onemoney is redirected (if multiple urls then all must be added)",
-        "required": true
+        "id": "fiuLogo",
+        "name": "FIU Logo",
+        "type": "fileOrLink",
+        "description": "Upload your FIU logo (max 2MB, PNG, JPEG or SVG)",
+        "required": false,
+        "validation": {
+          "maxSize": 2,
+          "acceptedFileTypes": ["image/png", "image/jpeg", "image/svg+xml"]
+        }
       }
     ]
   },
@@ -318,10 +360,9 @@
     "title": "Consent Parameters",
     "fields": [
       {
-        "id": "consentParameters",
+        "id": "consentParams",
         "type": "consentParams",
-        "description": "Should add + button for adding more usecases that should add the below values",
-        "required": true
+        "required": false
       }
     ],
     "consentParamFields": [
@@ -330,36 +371,40 @@
         "name": "Usecase details",
         "type": "text",
         "description": "Details of the usecase where AA is integrated",
-        "required": true
+        "required": false
       },
       {
         "id": "purposeCode",
         "name": "Purpose Code",
-        "type": "text",
+        "type": "dropdown",
+        "options": ["101", "102", "103", "104", "105"],
         "description": "As per ReBIT",
-        "required": true
+        "required": false,
+        "dependsOn": "regulator"
       },
       {
         "id": "purposeText",
         "name": "Purpose Text",
-        "type": "text",
+        "type": "dropdown",
+        "options": ["101", "102", "103", "104", "105"],
         "description": "Displayed on consent screen",
-        "required": true
+        "required": false
       },
       {
         "id": "consentValidityPeriod",
         "name": "Consent Validity Period",
-        "type": "text",
-        "description": "No. in Day / Month / Year",
-        "required": true
+        "type": "durationInput",
+        "description": "Duration of consent validity",
+        "required": false,
+        "units": ["Day", "Month", "Year"]
       },
       {
         "id": "fetchType",
         "name": "Fetch Type",
-        "type": "dropdown",
+        "type": "toggle",
         "options": ["Onetime", "Periodic"],
         "description": "",
-        "required": true
+        "required": false
       },
       {
         "id": "consentType",
@@ -367,28 +412,49 @@
         "type": "multiSelect",
         "options": ["Profile", "Summary", "Transactions"],
         "description": "",
-        "required": true
+        "required": false
+      },
+      {
+        "id": "fiTypes",
+        "name": "FI Types",
+        "type": "multiSelect",
+        "options": [
+          "AIF", "BONDS", "CIS", "CP", "DEBENTURES", "DEPOSIT", "EQUITIES", 
+          "ETF", "GENERAL_INSURANCE", "GOVT_SECURITIES", "GSTR1_3B", "IDR", 
+          "INVIT", "LIFE_INSURANCE", "MUTUAL_FUNDS", "RECURRING_DEPOSIT", 
+          "REIT", "SIP", "TERM_DEPOSIT"
+        ],
+        "description": "Financial Information Types",
+        "required": false,
+        "dependsOn": ["purposeCode", "regulator"]
       },
       {
         "id": "dataFetchFrequency",
         "name": "Data fetch frequency",
-        "type": "text",
-        "description": "No. in Hour / Day / Month / Year",
-        "required": true
+        "type": "durationInput",
+        "description": "Frequency of data fetch",
+        "required": false,
+        "units": ["Hour", "Day", "Month", "Year"],
+        "conditionalDisplay": {
+          "dependsOn": "fetchType",
+          "showWhen": "Periodic"
+        }
       },
       {
         "id": "fiDataRange",
         "name": "FI Data Range",
-        "type": "text",
-        "description": "In days / Months/Years",
-        "required": true
+        "type": "durationInput",
+        "description": "Duration of data to fetch",
+        "required": false,
+        "units": ["Day", "Month", "Year"]
       },
       {
         "id": "dataLife",
         "name": "Data Life",
-        "type": "text",
-        "description": "No. in Day / Month / Year",
-        "required": true
+        "type": "durationInput",
+        "description": "Duration data will be available",
+        "required": false,
+        "units": ["Day", "Month", "Year"]
       }
     ]
   },
@@ -396,6 +462,13 @@
     "title": "Cocreated Development Details",
     "description": "Applicable only for cocoreated development",
     "fields": [
+      {
+        "id": "figmaUrl",
+        "name": "Figma URL",
+        "type": "text",
+        "description": "Please provide the Figma URL for your custom or co-created integration",
+        "required": false
+      },
       {
         "id": "dataPassedToOnemoney",
         "name": "Data passed from FIU to Onemoney",
@@ -418,5 +491,199 @@
         "required": false
       }
     ]
+  },
+  "licenseTypeMap": {
+    "RBI": [
+      "Small Finance Bank",
+      "Private Sector Bank",
+      "Public Sector Bank",
+      "Financial Institution",
+      "NBFC",
+      "RRB",
+      "Co-operative Banks",
+      "Foreign Bank",
+      "HFC",
+      "MFI",
+      "NBFC-Factors",
+      "NBFC-D",
+      "NBFC-P2P",
+      "Payments Banks",
+      "PPI",
+      "TReDS",
+      "AD-II"
+    ],
+    "SEBI": [
+      "Stock Broker",
+      "RIAs",
+      "Portfolio Manager",
+      "RTA",
+      "Depository",
+      "Research Analyst",
+      "AIF",
+      "AMC",
+      "CRA",
+      "Merchant Banker"
+    ],
+    "IRDAI": [
+      "Private Sector Life",
+      "Corporate Agent",
+      "Private Sector Non Life",
+      "Insurance Brokers",
+      "Public Sector Non Life",
+      "Public Sector Life",
+      "Health Insurer",
+      "Insurance Marketing Firms"
+    ],
+    "PFRDA": [
+      "CRA"
+    ]
+  },
+  "consentTemplates": {
+    "SEBI": {
+      "101": {
+        "usecaseCategory": "Personal Finance",
+        "purposeText": "To provide <Wealth Management / Advisory> Services",
+        "fiTypes": ["DEPOSIT", "TERM_DEPOSIT", "RECURRING_DEPOSIT", "SIP", "CP", "GOVT_SECURITIES", "EQUITIES", "BONDS", "DEBENTURES", "MUTUAL_FUNDS", "ETF", "IDR", "CIS", "AIF", "INVIT", "REIT", "GSTR1_3B"],
+        "fetchType": "PERIODIC",
+        "consentType": ["Profile", "Summary", "Transactions"],
+        "maxFrequency": "31 times per month",
+        "maxFiDataRange": "13 Months for other FI Types, 20 years for SEBI FI Types",
+        "maxConsentValidity": "1 Year",
+        "maxDataLife": "1 Month"
+      },
+      "102": {
+        "usecaseCategory": "Personal Finance",
+        "purposeText": "To generate insights based on your overall finances and provide incidental recommendations, if any",
+        "fiTypes": ["DEPOSIT", "TERM_DEPOSIT", "RECURRING_DEPOSIT", "SIP", "CP", "GOVT_SECURITIES", "EQUITIES", "BONDS", "DEBENTURES", "MUTUAL_FUNDS", "ETF", "IDR", "CIS", "AIF", "INVIT", "REIT", "GSTR1_3B"],
+        "fetchType": "PERIODIC",
+        "consentType": ["Profile", "Summary", "Transactions"],
+        "maxFrequency": "45 Times per Month",
+        "maxFiDataRange": "10 years for SEBI FI Types, 13 Months for others",
+        "maxConsentValidity": "1 Year",
+        "maxDataLife": "1 Month"
+      },
+      "104": {
+        "usecaseCategory": "Account Monitoring",
+        "purposeText": "To enable regulatory and internal compliance reporting of investment by employees and associated persons",
+        "fiTypes": ["SIP", "EQUITIES", "DEBENTURES", "MUTUAL_FUNDS", "ETF", "IDR", "CIS", "AIF", "INVIT", "REIT"],
+        "fetchType": "PERIODIC",
+        "consentType": ["Profile", "Summary", "Transactions"],
+        "maxFrequency": "25 times per month",
+        "maxFiDataRange": "6 months",
+        "maxConsentValidity": "1 year",
+        "maxDataLife": "7 days"
+      },
+      "105": {
+        "usecaseCategory": "Account Monitoring",
+        "purposeText": "To assess genuineness and financial soundness of the customer for FNO service activation",
+        "fiTypes": ["DEPOSIT", "TERM_DEPOSIT", "RECURRING_DEPOSIT", "SIP", "CP", "GOVT_SECURITIES", "EQUITIES", "BONDS", "DEBENTURES", "MUTUAL_FUNDS", "ETF", "IDR", "CIS", "AIF", "INVIT", "REIT", "GSTR1_3B"],
+        "fetchType": "ONE-TIME",
+        "consentType": ["Profile", "Summary", "Transactions"],
+        "maxFrequency": "NA",
+        "maxFiDataRange": "6 Months",
+        "maxConsentValidity": "1 Month",
+        "maxDataLife": "7 Days"
+      }
+    },
+    "RBI": {
+      "103": {
+        "usecaseCategory": "Underwriting Risk",
+        "purposeText": "To process borrower's <loan / credit card / credit line> application",
+        "fiTypes": ["DEPOSIT", "TERM_DEPOSIT", "RECURRING_DEPOSIT", "SIP", "CP", "GOVT_SECURITIES", "EQUITIES", "BONDS", "DEBENTURES", "MUTUAL_FUNDS", "ETF", "IDR", "CIS", "AIF", "INVIT", "REIT", "GSTR1_3B"],
+        "fetchType": "ONE-TIME",
+        "consentType": ["Profile", "Summary", "Transactions"],
+        "maxFrequency": "NA",
+        "maxFiDataRange": "14 Months",
+        "maxConsentValidity": "1 Month",
+        "maxDataLife": "1 Month"
+      },
+      "104": [
+        {
+          "usecaseCategory": "Account Monitoring",
+          "purposeText": "To monitor the borrower's account to verify the repayment capability, subject to activation of (loan / credit card / credit line)",
+          "fiTypes": ["DEPOSIT", "TERM_DEPOSIT", "RECURRING_DEPOSIT", "SIP", "CP", "GOVT_SECURITIES", "EQUITIES", "BONDS", "DEBENTURES", "MUTUAL_FUNDS", "ETF", "IDR", "CIS", "AIF", "INVIT", "REIT", "GSTR1_3B"],
+          "fetchType": "PERIODIC",
+          "consentType": ["Profile", "Summary", "Transactions"],
+          "maxFrequency": "5 times per Month",
+          "maxFiDataRange": "6 months",
+          "maxConsentValidity": "Coterminous with loan tenure",
+          "maxDataLife": "1 Month"
+        },
+        {
+          "usecaseCategory": "Account Monitoring",
+          "purposeText": "To monitor a borrower's accounts for (loan / credit card / credit line) collection, in case of overdue payments",
+          "fiTypes": ["DEPOSIT"],
+          "fetchType": "PERIODIC",
+          "consentType": ["Summary"],
+          "maxFrequency": "1 per day",
+          "maxFiDataRange": "1 day",
+          "maxConsentValidity": "Coterminous with loan tenure",
+          "maxDataLife": "1 Month"
+        },
+        {
+          "usecaseCategory": "Account Monitoring",
+          "purposeText": "To monitor the counterparty risks of Recovery Agents / Sourcing Partners.",
+          "fiTypes": ["DEPOSIT", "GSTR1_3B"],
+          "fetchType": "PERIODIC",
+          "consentType": ["Profile", "Summary", "Transaction"],
+          "maxFrequency": "1 per month",
+          "maxFiDataRange": "6 months",
+          "maxConsentValidity": "1 year",
+          "maxDataLife": "90 days"
+        }
+      ]
+    },
+    "IRDAI": {
+      "103": {
+        "usecaseCategory": "Income verification",
+        "purposeText": "To verify the income as or on behalf of the insurer selected by the customer while underwriting a Life insurance policy",
+        "fiTypes": ["DEPOSIT", "TERM_DEPOSIT", "RECURRING_DEPOSIT", "MUTUAL_FUNDS", "GSTR1_3B"],
+        "fetchType": "ONE-TIME",
+        "consentType": ["Profile", "Summary", "Transactions"],
+        "maxFrequency": "NA",
+        "maxFiDataRange": "12 Months",
+        "maxConsentValidity": "45 Days",
+        "maxDataLife": "45 Days"
+      }
+    },
+    "MoRD": {
+      "104": {
+        "usecaseCategory": "Account Monitoring",
+        "purposeText": "To verify income and job continuity of beneficiaries of government schemes",
+        "fiTypes": ["DEPOSIT"],
+        "fetchType": "PERIODIC",
+        "consentType": ["Profile", "Summary", "Transactions"],
+        "maxFrequency": "3 times per month",
+        "maxFiDataRange": "1 month",
+        "maxConsentValidity": "18 Months",
+        "maxDataLife": "1 Day"
+      }
+    },
+    "All": {
+      "105": [
+        {
+          "usecaseCategory": "Bank Account Verification",
+          "purposeText": "To verify <financial account type> account details for <activity/product>",
+          "fiTypes": ["GSTR1_3B", "LIFE_INSURANCE", "GENERAL_INSURANCE", "DEPOSIT"],
+          "fetchType": "ONE-TIME",
+          "consentType": ["Profile", "Summary"],
+          "maxFrequency": "NA",
+          "maxFiDataRange": "1 Day",
+          "maxConsentValidity": "1 Day",
+          "maxDataLife": "1 Day"
+        },
+        {
+          "usecaseCategory": "Account Monitoring",
+          "purposeText": "Verification of financial condition of <Employees, Vendors and other third parties>",
+          "fiTypes": ["GSTR1_3B", "LIFE_INSURANCE", "GENERAL_INSURANCE", "EQUITIES", "MUTUAL_FUNDS", "DEPOSIT"],
+          "fetchType": "ONE-TIME",
+          "consentType": ["Profile", "Summary", "Transactions"],
+          "maxFrequency": "NA",
+          "maxFiDataRange": "12 Months",
+          "maxConsentValidity": "1 Day",
+          "maxDataLife": "1 Day"
+        }
+      ]
+    }
   }
 }

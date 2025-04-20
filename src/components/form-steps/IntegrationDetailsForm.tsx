@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { 
   FormField,
@@ -17,12 +18,62 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Plus, Trash } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import formFields from "@/data/formFields.json";
 
-const IntegrationDetailsForm = () => {
+interface IntegrationDetailsFormProps {
+  setShowCocreatedDevelopment: (show: boolean) => void;
+}
+
+const IntegrationDetailsForm = ({ setShowCocreatedDevelopment }: IntegrationDetailsFormProps) => {
   const { control, watch, setValue } = useFormContext();
   const integrationType = formFields.integrationDetails.fields[0].options;
   const integrationMode = watch("integrationMode");
+  
+  // URLs and SDK Versions state
+  const [webRedirectionUrls, setWebRedirectionUrls] = useState<string[]>([""]);
+  const [sdkVersions, setSdkVersions] = useState<string[]>([""]);
+  
+  // Add new URL or SDK Version
+  const addWebRedirectionUrl = () => {
+    setWebRedirectionUrls([...webRedirectionUrls, ""]);
+  };
+  
+  const addSdkVersion = () => {
+    setSdkVersions([...sdkVersions, ""]);
+  };
+  
+  // Remove URL or SDK Version
+  const removeWebRedirectionUrl = (index: number) => {
+    const newUrls = [...webRedirectionUrls];
+    newUrls.splice(index, 1);
+    setWebRedirectionUrls(newUrls);
+    setValue("webRedirectionUrls", newUrls);
+  };
+  
+  const removeSdkVersion = (index: number) => {
+    const newVersions = [...sdkVersions];
+    newVersions.splice(index, 1);
+    setSdkVersions(newVersions);
+    setValue("sdkVersions", newVersions);
+  };
+  
+  // Update URL or SDK Version
+  const updateWebRedirectionUrl = (index: number, value: string) => {
+    const newUrls = [...webRedirectionUrls];
+    newUrls[index] = value;
+    setWebRedirectionUrls(newUrls);
+    setValue("webRedirectionUrls", newUrls);
+  };
+  
+  const updateSdkVersion = (index: number, value: string) => {
+    const newVersions = [...sdkVersions];
+    newVersions[index] = value;
+    setSdkVersions(newVersions);
+    setValue("sdkVersions", newVersions);
+  };
   
   return (
     <div className="space-y-6">
@@ -54,37 +105,97 @@ const IntegrationDetailsForm = () => {
         ))}
         
         {watch("integrationType.webRedirection") && (
-          <FormField
-            control={control}
-            name="integrationType.webRedirectionUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Webredirection URL</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="https://example.com/redirect" />
-                </FormControl>
-                <FormDescription>Add Onemoney url integrated. If more than one then use semicolon (;)</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium">Webredirection URLs</h4>
+            {webRedirectionUrls.map((url, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input
+                  value={url}
+                  onChange={(e) => updateWebRedirectionUrl(index, e.target.value)}
+                  placeholder="https://example.com/redirect"
+                  className="flex-1"
+                />
+                
+                <div className="flex items-center">
+                  {index === webRedirectionUrls.length - 1 ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={addWebRedirectionUrl}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Add URL</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => removeWebRedirectionUrl(index)}
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
         
         {watch("integrationType.sdk") && (
-          <FormField
-            control={control}
-            name="integrationType.sdkVersion"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>SDK Type and Version</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="e.g., Android v2.1.0; iOS v2.0.0" />
-                </FormControl>
-                <FormDescription>If more than one, use semicolon (;)</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium">SDK Versions</h4>
+            {sdkVersions.map((version, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input
+                  value={version}
+                  onChange={(e) => updateSdkVersion(index, e.target.value)}
+                  placeholder="e.g., Android v2.1.0"
+                  className="flex-1"
+                />
+                
+                <div className="flex items-center">
+                  {index === sdkVersions.length - 1 ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={addSdkVersion}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Add SDK Version</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => removeSdkVersion(index)}
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
       
@@ -97,10 +208,7 @@ const IntegrationDetailsForm = () => {
             <Select
               onValueChange={(value) => {
                 field.onChange(value);
-                // Clear Figma URL if not needed
-                if (value !== "Custom" && value !== "Cocreated FIU" && value !== "Cocreated TSP") {
-                  setValue("figmaUrl", "");
-                }
+                setShowCocreatedDevelopment(value === "Cocreated FIU" || value === "Cocreated TSP");
               }}
               defaultValue={field.value}
             >
@@ -117,32 +225,31 @@ const IntegrationDetailsForm = () => {
                 ))}
               </SelectContent>
             </Select>
-            <FormDescription>
-              {formFields.integrationDetails.fields[1].description}
-            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
       />
       
-      {(integrationMode === "Custom" || integrationMode === "Cocreated FIU" || integrationMode === "Cocreated TSP") && (
-        <FormField
-          control={control}
-          name="figmaUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Figma URL</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="https://figma.com/..." />
-              </FormControl>
+      <FormField
+        control={control}
+        name="consentRequestSMS"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-center justify-between">
+            <div className="space-y-0.5">
+              <FormLabel className="text-base">Consent request SMS</FormLabel>
               <FormDescription>
-                Please provide the Figma URL for your custom or co-created integration
+                If Onemoney consent request SMS is to be enabled
               </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      )}
+            </div>
+            <FormControl>
+              <Switch
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            </FormControl>
+          </FormItem>
+        )}
+      />
     </div>
   );
 };

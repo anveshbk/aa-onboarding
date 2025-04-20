@@ -48,7 +48,6 @@ const FormWizard = () => {
     },
     {
       title: "FIU SPOC Details",
-      description: "Please provide contact details for each type of SPOC (Single Point of Contact).",
       component: <SpocDetailsForm />,
       validationSchema: SpocDetailsSchema,
     },

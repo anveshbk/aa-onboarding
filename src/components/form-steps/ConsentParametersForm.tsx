@@ -219,6 +219,36 @@ const parsePeriodString = (periodStr: string): { number: string, unit: string } 
   return null;
 };
 
+// Normalize duration strings to compare values across different units
+const normalizeDuration = (value: {number: string, unit: string}, targetUnit: string): number => {
+  const num = parseInt(value.number);
+  const sourceUnit = value.unit.toLowerCase();
+  const target = targetUnit.toLowerCase();
+  
+  // Simple conversion logic - can be expanded for more sophisticated unit conversions
+  if (sourceUnit === target) return num;
+  
+  // Convert everything to days for comparison (simplified)
+  const getDays = (n: number, unit: string) => {
+    switch (unit) {
+      case 'day': return n;
+      case 'month': return n * 30; // Simplified
+      case 'year': return n * 365; // Simplified
+      default: return n;
+    }
+  };
+  
+  const sourceDays = getDays(num, sourceUnit);
+  
+  // Convert back from days to target unit
+  switch (target) {
+    case 'day': return sourceDays;
+    case 'month': return sourceDays / 30;
+    case 'year': return sourceDays / 365;
+    default: return sourceDays;
+  }
+};
+
 // Function to get the appropriate template based on filters
 const getFilteredTemplate = (
   regulator: string, 
@@ -302,7 +332,6 @@ const ConsentParamItem = ({
   const purposeCode = watch(`consentParams.${index}.purposeCode`) || "";
   const fetchType = watch(`consentParams.${index}.fetchType`) || "Onetime";
   const consentTypes = watch(`consentParams.${index}.consentType`) || [];
-  const fiTypes = watch(`consentParams.${index}.fiTypes`) || [];
   
   // Validation errors
   const [validationErrors, setValidationErrors] = useState<{
@@ -310,6 +339,8 @@ const ConsentParamItem = ({
     frequency?: string;
     fiDataRange?: string;
     dataLife?: string;
+    consentType?: string;
+    fiTypes?: string;
   }>({});
   
   // Get filtered values based on current selections
@@ -324,7 +355,7 @@ const ConsentParamItem = ({
   // Extract rules from the template
   const allowedFiTypes = currentTemplate?.fiTypes || [];
   const requiredFetchType = currentTemplate?.fetchType || null;
-  const allowedConsentTypes = currentTemplate?.consentType?.join(', ') || null;
+  const allowedConsentTypes = currentTemplate?.consentType || [];
   
   // Max values with parsed object structure
   const maxFrequency = currentTemplate?.maxFrequency ? parseFrequencyString(currentTemplate.maxFrequency) : null;
@@ -341,12 +372,10 @@ const ConsentParamItem = ({
     // Validate consent validity
     const consentValidity = watch(`consentParams.${index}.consentValidityPeriod`);
     if (consentValidity && maxConsentValidity) {
-      const currentUnit = consentValidity.unit.toLowerCase();
-      const maxUnit = maxConsentValidity.unit.toLowerCase();
+      const normalizedInput = normalizeDuration(consentValidity, maxConsentValidity.unit);
+      const normalizedMax = parseInt(maxConsentValidity.number);
       
-      // Simple validation - only works well for same units
-      if (currentUnit === maxUnit && 
-          parseInt(consentValidity.number) > parseInt(maxConsentValidity.number)) {
+      if (normalizedInput > normalizedMax) {
         errors.consentValidity = `Maximum allowed is ${maxConsentValidity.number} ${maxConsentValidity.unit}`;
       }
     }
@@ -355,11 +384,10 @@ const ConsentParamItem = ({
     if (fetchType === "Periodic") {
       const frequency = watch(`consentParams.${index}.dataFetchFrequency`);
       if (frequency && maxFrequency) {
-        const currentUnit = frequency.unit.toLowerCase();
-        const maxUnit = maxFrequency.unit.toLowerCase();
+        const normalizedInput = normalizeDuration(frequency, maxFrequency.unit);
+        const normalizedMax = parseInt(maxFrequency.number);
         
-        if (currentUnit === maxUnit && 
-            parseInt(frequency.number) > parseInt(maxFrequency.number)) {
+        if (normalizedInput > normalizedMax) {
           errors.frequency = `Maximum allowed is ${maxFrequency.number} times per ${maxFrequency.unit}`;
         }
       }
@@ -368,11 +396,10 @@ const ConsentParamItem = ({
     // Validate FI data range
     const fiDataRange = watch(`consentParams.${index}.fiDataRange`);
     if (fiDataRange && maxFiDataRange) {
-      const currentUnit = fiDataRange.unit.toLowerCase();
-      const maxUnit = maxFiDataRange.unit.toLowerCase();
+      const normalizedInput = normalizeDuration(fiDataRange, maxFiDataRange.unit);
+      const normalizedMax = parseInt(maxFiDataRange.number);
       
-      if (currentUnit === maxUnit && 
-          parseInt(fiDataRange.number) > parseInt(maxFiDataRange.number)) {
+      if (normalizedInput > normalizedMax) {
         errors.fiDataRange = `Maximum allowed is ${maxFiDataRange.number} ${maxFiDataRange.unit}`;
       }
     }
@@ -380,17 +407,40 @@ const ConsentParamItem = ({
     // Validate data life
     const dataLife = watch(`consentParams.${index}.dataLife`);
     if (dataLife && maxDataLife) {
-      const currentUnit = dataLife.unit.toLowerCase();
-      const maxUnit = maxDataLife.unit.toLowerCase();
+      const normalizedInput = normalizeDuration(dataLife, maxDataLife.unit);
+      const normalizedMax = parseInt(maxDataLife.number);
       
-      if (currentUnit === maxUnit && 
-          parseInt(dataLife.number) > parseInt(maxDataLife.number)) {
+      if (normalizedInput > normalizedMax) {
         errors.dataLife = `Maximum allowed is ${maxDataLife.number} ${maxDataLife.unit}`;
       }
     }
     
+    // Validate consent types
+    const currentConsentTypes = watch(`consentParams.${index}.consentType`) || [];
+    if (currentConsentTypes.length > 0 && allowedConsentTypes.length > 0) {
+      const invalidTypes = currentConsentTypes.filter(
+        (type: string) => !allowedConsentTypes.includes(type)
+      );
+      
+      if (invalidTypes.length > 0) {
+        errors.consentType = `Only ${allowedConsentTypes.join(', ')} are allowed for this template`;
+      }
+    }
+    
+    // Validate FI types
+    const currentFiTypes = watch(`consentParams.${index}.fiTypes`) || [];
+    if (currentFiTypes.length > 0 && allowedFiTypes.length > 0) {
+      const invalidTypes = currentFiTypes.filter(
+        (type: string) => !allowedFiTypes.includes(type)
+      );
+      
+      if (invalidTypes.length > 0) {
+        errors.fiTypes = `Only specific FI types are allowed for this template`;
+      }
+    }
+    
     setValidationErrors(errors);
-  }, [currentTemplate, usecaseCategory, purposeCode, fetchType, watch, index]);
+  }, [currentTemplate, usecaseCategory, purposeCode, fetchType, watch, index, allowedConsentTypes, allowedFiTypes]);
   
   // Set fetch type from template when purpose code changes
   useEffect(() => {
@@ -533,42 +583,50 @@ const ConsentParamItem = ({
                 render={({ field }) => (
                   <FormControl>
                     <div className="space-y-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        {allowedFiTypes.map((type) => (
-                          <div key={type} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`fiTypes-${type}-${index}`}
-                              checked={field.value?.includes(type)}
-                              onCheckedChange={(checked) => {
-                                const newValues = [...(field.value || [])];
-                                
-                                if (checked) {
-                                  if (!newValues.includes(type)) {
-                                    newValues.push(type);
+                      {allowedFiTypes.length > 0 ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          {allowedFiTypes.map((type) => (
+                            <div key={type} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`fiTypes-${type}-${index}`}
+                                checked={(field.value || []).includes(type)}
+                                onCheckedChange={(checked) => {
+                                  const newValues = [...(field.value || [])];
+                                  
+                                  if (checked) {
+                                    if (!newValues.includes(type)) {
+                                      newValues.push(type);
+                                    }
+                                  } else {
+                                    const typeIndex = newValues.indexOf(type);
+                                    if (typeIndex > -1) {
+                                      newValues.splice(typeIndex, 1);
+                                    }
                                   }
-                                } else {
-                                  const typeIndex = newValues.indexOf(type);
-                                  if (typeIndex > -1) {
-                                    newValues.splice(typeIndex, 1);
-                                  }
-                                }
-                                
-                                field.onChange(newValues);
-                              }}
-                            />
-                            <label
-                              htmlFor={`fiTypes-${type}-${index}`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                              {type}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {allowedFiTypes.length === 0 && usecaseCategory && purposeCode && (
+                                  
+                                  field.onChange(newValues);
+                                }}
+                              />
+                              <label
+                                htmlFor={`fiTypes-${type}-${index}`}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                {type}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
                         <p className="text-sm text-muted-foreground italic">
-                          Select a valid combination of usecase category and purpose code to see allowed FI types
+                          {usecaseCategory && purposeCode 
+                            ? "No FI types available for this template" 
+                            : "Select a valid combination of usecase category and purpose code to see allowed FI types"}
+                        </p>
+                      )}
+                      
+                      {validationErrors.fiTypes && (
+                        <p className="text-destructive text-sm flex items-center">
+                          <AlertCircle className="h-3 w-3 mr-1" /> {validationErrors.fiTypes}
                         </p>
                       )}
                     </div>
@@ -596,9 +654,15 @@ const ConsentParamItem = ({
                 )}
               />
               
-              {allowedConsentTypes && (
+              {Array.isArray(allowedConsentTypes) && allowedConsentTypes.length > 0 && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  Allowed: {allowedConsentTypes}
+                  Allowed: {allowedConsentTypes.join(', ')}
+                </p>
+              )}
+              
+              {validationErrors.consentType && (
+                <p className="text-destructive text-sm flex items-center">
+                  <AlertCircle className="h-3 w-3 mr-1" /> {validationErrors.consentType}
                 </p>
               )}
             </td>

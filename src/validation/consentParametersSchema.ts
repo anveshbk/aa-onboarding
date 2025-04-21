@@ -22,3 +22,26 @@ const ConsentParamItemSchema = z.object({
 export const ConsentParametersSchema = z.object({
   consentParams: z.array(ConsentParamItemSchema).optional(),
 });
+
+// Define TypeScript interfaces for consent templates
+export interface ConsentTemplate {
+  usecaseCategory?: string;
+  purposeText?: string;
+  maxConsentValidity?: string;
+  maxFiDataRange?: string;
+  maxDataLife?: string;
+  fetchType?: string;
+  maxFrequency?: string;
+  fiTypes?: string[];
+  consentType?: string[];
+}
+
+// Export TypeScript interfaces for type checking
+export type ConsentTemplateMap = {
+  [key: string]: ConsentTemplate | ConsentTemplate[];
+};
+
+export type ConsentTemplatesMap = {
+  [regulator: string]: ConsentTemplateMap;
+};
+

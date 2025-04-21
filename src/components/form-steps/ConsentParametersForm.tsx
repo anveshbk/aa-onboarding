@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { 
@@ -36,14 +35,18 @@ import {
 } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import formFields from "@/data/formFields.json";
+import { ConsentTemplate, ConsentTemplateMap, ConsentTemplatesMap } from "@/validation/consentParametersSchema";
+
+// Type-safe access to formFields.consentTemplates
+const consentTemplates = formFields.consentTemplates as ConsentTemplatesMap;
 
 // Get usecase categories based on regulator
 const getUsecaseCategories = (regulator: string) => {
   const categories = new Set<string>();
   
   // Add categories for the specific regulator
-  if (formFields.consentTemplates[regulator]) {
-    Object.values(formFields.consentTemplates[regulator]).forEach(template => {
+  if (consentTemplates[regulator]) {
+    Object.values(consentTemplates[regulator]).forEach(template => {
       if (Array.isArray(template)) {
         template.forEach(t => {
           if (t.usecaseCategory) categories.add(t.usecaseCategory);
@@ -55,8 +58,8 @@ const getUsecaseCategories = (regulator: string) => {
   }
   
   // Add categories from the "All" regulator
-  if (formFields.consentTemplates["All"]) {
-    Object.values(formFields.consentTemplates["All"]).forEach(template => {
+  if (consentTemplates["All"]) {
+    Object.values(consentTemplates["All"]).forEach(template => {
       if (Array.isArray(template)) {
         template.forEach(t => {
           if (t.usecaseCategory) categories.add(t.usecaseCategory);
@@ -74,11 +77,11 @@ const getUsecaseCategories = (regulator: string) => {
 const getPurposeCodes = (regulator: string, usecaseCategory: string) => {
   if (!regulator || !usecaseCategory) return [];
   
-  const templates = formFields.consentTemplates;
+  const templates = consentTemplates;
   let codes: string[] = [];
   
   // Function to extract purpose codes from templates
-  const extractPurposeCodes = (regulatorTemplates: any) => {
+  const extractPurposeCodes = (regulatorTemplates: ConsentTemplateMap) => {
     Object.entries(regulatorTemplates).forEach(([code, templateData]) => {
       if (Array.isArray(templateData)) {
         // Check if any template in the array matches the usecase category
@@ -317,12 +320,10 @@ const getFilteredTemplate = (
   regulator: string, 
   purposeCode: string, 
   usecaseCategory: string
-) => {
-  const templates = formFields.consentTemplates;
-  
+): ConsentTemplate | null => {
   // Check if there's a specific template for this regulator and purpose code
-  if (templates[regulator] && templates[regulator][purposeCode]) {
-    const regulatorTemplate = templates[regulator][purposeCode];
+  if (consentTemplates[regulator] && consentTemplates[regulator][purposeCode]) {
+    const regulatorTemplate = consentTemplates[regulator][purposeCode];
     
     // If it's an array, find the one matching the usecase category
     if (Array.isArray(regulatorTemplate)) {
@@ -338,8 +339,8 @@ const getFilteredTemplate = (
   }
   
   // If not found, try the "All" regulator
-  if (templates["All"] && templates["All"][purposeCode]) {
-    const allTemplate = templates["All"][purposeCode];
+  if (consentTemplates["All"] && consentTemplates["All"][purposeCode]) {
+    const allTemplate = consentTemplates["All"][purposeCode];
     
     if (Array.isArray(allTemplate)) {
       const matchingTemplate = allTemplate.find(

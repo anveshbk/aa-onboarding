@@ -37,12 +37,13 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import formFields from "@/data/formFields.json";
 
-// Get unique usecase categories from consent templates
-const getUsecaseCategories = () => {
+// Get usecase categories based on regulator
+const getUsecaseCategories = (regulator: string) => {
   const categories = new Set<string>();
   
-  Object.values(formFields.consentTemplates).forEach(regulatorTemplates => {
-    Object.values(regulatorTemplates).forEach(template => {
+  // Add categories for the specific regulator
+  if (formFields.consentTemplates[regulator]) {
+    Object.values(formFields.consentTemplates[regulator]).forEach(template => {
       if (Array.isArray(template)) {
         template.forEach(t => {
           if (t.usecaseCategory) categories.add(t.usecaseCategory);
@@ -51,9 +52,57 @@ const getUsecaseCategories = () => {
         categories.add(template.usecaseCategory);
       }
     });
-  });
+  }
+  
+  // Add categories from the "All" regulator
+  if (formFields.consentTemplates["All"]) {
+    Object.values(formFields.consentTemplates["All"]).forEach(template => {
+      if (Array.isArray(template)) {
+        template.forEach(t => {
+          if (t.usecaseCategory) categories.add(t.usecaseCategory);
+        });
+      } else if (template.usecaseCategory) {
+        categories.add(template.usecaseCategory);
+      }
+    });
+  }
   
   return Array.from(categories);
+};
+
+// Get purpose codes based on regulator and usecase category
+const getPurposeCodes = (regulator: string, usecaseCategory: string) => {
+  if (!regulator || !usecaseCategory) return [];
+  
+  const templates = formFields.consentTemplates;
+  let codes: string[] = [];
+  
+  // Function to extract purpose codes from templates
+  const extractPurposeCodes = (regulatorTemplates: any) => {
+    Object.entries(regulatorTemplates).forEach(([code, templateData]) => {
+      if (Array.isArray(templateData)) {
+        // Check if any template in the array matches the usecase category
+        if (templateData.some(t => t.usecaseCategory === usecaseCategory)) {
+          codes.push(code);
+        }
+      } else if (templateData.usecaseCategory === usecaseCategory) {
+        codes.push(code);
+      }
+    });
+  };
+  
+  // Get purpose codes for the specific regulator
+  if (templates[regulator]) {
+    extractPurposeCodes(templates[regulator]);
+  }
+  
+  // Add "All" regulator codes
+  if (templates["All"]) {
+    extractPurposeCodes(templates["All"]);
+  }
+  
+  // Remove duplicates
+  return [...new Set(codes)];
 };
 
 // Interface for duration inputs
@@ -62,9 +111,50 @@ interface DurationInputProps {
   onChange: (value: {number: string; unit: string;}) => void;
   units: string[];
   placeholder?: string;
-  maxValue?: number;
+  maxValue?: {number: string, unit: string} | null;
   error?: string;
+  targetUnit?: string;
 }
+
+// Convert time to days for normalization
+const toDays = (value: number, unit: string): number => {
+  switch (unit.toLowerCase()) {
+    case 'day': return value;
+    case 'month': return value * 30; // Approximation
+    case 'year': return value * 365; // Approximation
+    default: return value;
+  }
+};
+
+// Convert days to target unit
+const fromDays = (days: number, targetUnit: string): number => {
+  switch (targetUnit.toLowerCase()) {
+    case 'day': return days;
+    case 'month': return days / 30; // Approximation
+    case 'year': return days / 365; // Approximation
+    default: return days;
+  }
+};
+
+// Validate duration against maximum value
+const validateDuration = (
+  input: {number: string, unit: string} | undefined,
+  maxValue: {number: string, unit: string} | null
+): string | undefined => {
+  if (!input || !input.number || !maxValue || !maxValue.number) return undefined;
+  
+  // Convert both to days for comparison
+  const inputDays = toDays(Number(input.number), input.unit);
+  const maxDays = toDays(Number(maxValue.number), maxValue.unit);
+  
+  if (inputDays > maxDays) {
+    // Convert max days to the input unit for display
+    const convertedMax = Math.floor(fromDays(maxDays, input.unit));
+    return `Maximum allowed is ${convertedMax} ${input.unit}${convertedMax !== 1 ? 's' : ''}`;
+  }
+  
+  return undefined;
+};
 
 const DurationInput = ({ 
   value, 
@@ -72,16 +162,21 @@ const DurationInput = ({
   units, 
   placeholder,
   maxValue,
-  error
+  error,
+  targetUnit
 }: DurationInputProps) => {
   const handleNumberChange = (numValue: string) => {
-    // If number exceeds max value, cap it
-    if (maxValue && parseInt(numValue) > maxValue) {
-      numValue = maxValue.toString();
-    }
-    
+    // Store in the user-selected unit
     onChange({ number: numValue, unit: value?.unit || units[0] });
   };
+  
+  // Dynamic validation based on unit changes
+  useEffect(() => {
+    if (value?.number && value.unit && maxValue) {
+      // This will trigger validation when unit changes
+      handleNumberChange(value.number);
+    }
+  }, [value?.unit]);
 
   return (
     <div className="space-y-2">
@@ -89,7 +184,6 @@ const DurationInput = ({
         <Input 
           type="number"
           min="1"
-          max={maxValue}
           value={value?.number || ""}
           onChange={(e) => handleNumberChange(e.target.value)}
           placeholder={placeholder || "Enter number"}
@@ -135,7 +229,6 @@ const FrequencyInput = ({
         <Input 
           type="number"
           min="1"
-          max={maxValue}
           value={value?.number || ""}
           onChange={(e) => onChange({ 
             number: e.target.value, 
@@ -219,36 +312,6 @@ const parsePeriodString = (periodStr: string): { number: string, unit: string } 
   return null;
 };
 
-// Normalize duration strings to compare values across different units
-const normalizeDuration = (value: {number: string, unit: string}, targetUnit: string): number => {
-  const num = parseInt(value.number);
-  const sourceUnit = value.unit.toLowerCase();
-  const target = targetUnit.toLowerCase();
-  
-  // Simple conversion logic - can be expanded for more sophisticated unit conversions
-  if (sourceUnit === target) return num;
-  
-  // Convert everything to days for comparison (simplified)
-  const getDays = (n: number, unit: string) => {
-    switch (unit) {
-      case 'day': return n;
-      case 'month': return n * 30; // Simplified
-      case 'year': return n * 365; // Simplified
-      default: return n;
-    }
-  };
-  
-  const sourceDays = getDays(num, sourceUnit);
-  
-  // Convert back from days to target unit
-  switch (target) {
-    case 'day': return sourceDays;
-    case 'month': return sourceDays / 30;
-    case 'year': return sourceDays / 365;
-    default: return sourceDays;
-  }
-};
-
 // Function to get the appropriate template based on filters
 const getFilteredTemplate = (
   regulator: string, 
@@ -292,27 +355,6 @@ const getFilteredTemplate = (
   return null;
 };
 
-// Get purpose codes based on regulator
-const getPurposeCodes = (regulator: string) => {
-  if (!regulator) return [];
-  
-  const templates = formFields.consentTemplates;
-  let codes: string[] = [];
-  
-  // Get purpose codes for the specific regulator
-  if (templates[regulator]) {
-    codes = Object.keys(templates[regulator]);
-  }
-  
-  // Add "All" regulator codes
-  if (templates["All"]) {
-    codes = [...codes, ...Object.keys(templates["All"])];
-  }
-  
-  // Remove duplicates
-  return [...new Set(codes)];
-};
-
 const ConsentParamItem = ({ 
   index,
   control,
@@ -344,8 +386,8 @@ const ConsentParamItem = ({
   }>({});
   
   // Get filtered values based on current selections
-  const purposeCodes = getPurposeCodes(regulator);
-  const usecaseCategories = getUsecaseCategories();
+  const usecaseCategories = getUsecaseCategories(regulator);
+  const purposeCodes = getPurposeCodes(regulator, usecaseCategory);
   
   // Get the template that matches current filters
   const currentTemplate = usecaseCategory && purposeCode 
@@ -372,11 +414,9 @@ const ConsentParamItem = ({
     // Validate consent validity
     const consentValidity = watch(`consentParams.${index}.consentValidityPeriod`);
     if (consentValidity && maxConsentValidity) {
-      const normalizedInput = normalizeDuration(consentValidity, maxConsentValidity.unit);
-      const normalizedMax = parseInt(maxConsentValidity.number);
-      
-      if (normalizedInput > normalizedMax) {
-        errors.consentValidity = `Maximum allowed is ${maxConsentValidity.number} ${maxConsentValidity.unit}`;
+      const validationError = validateDuration(consentValidity, maxConsentValidity);
+      if (validationError) {
+        errors.consentValidity = validationError;
       }
     }
     
@@ -384,11 +424,9 @@ const ConsentParamItem = ({
     if (fetchType === "Periodic") {
       const frequency = watch(`consentParams.${index}.dataFetchFrequency`);
       if (frequency && maxFrequency) {
-        const normalizedInput = normalizeDuration(frequency, maxFrequency.unit);
-        const normalizedMax = parseInt(maxFrequency.number);
-        
-        if (normalizedInput > normalizedMax) {
-          errors.frequency = `Maximum allowed is ${maxFrequency.number} times per ${maxFrequency.unit}`;
+        const validationError = validateDuration(frequency, maxFrequency);
+        if (validationError) {
+          errors.frequency = validationError;
         }
       }
     }
@@ -396,22 +434,18 @@ const ConsentParamItem = ({
     // Validate FI data range
     const fiDataRange = watch(`consentParams.${index}.fiDataRange`);
     if (fiDataRange && maxFiDataRange) {
-      const normalizedInput = normalizeDuration(fiDataRange, maxFiDataRange.unit);
-      const normalizedMax = parseInt(maxFiDataRange.number);
-      
-      if (normalizedInput > normalizedMax) {
-        errors.fiDataRange = `Maximum allowed is ${maxFiDataRange.number} ${maxFiDataRange.unit}`;
+      const validationError = validateDuration(fiDataRange, maxFiDataRange);
+      if (validationError) {
+        errors.fiDataRange = validationError;
       }
     }
     
     // Validate data life
     const dataLife = watch(`consentParams.${index}.dataLife`);
     if (dataLife && maxDataLife) {
-      const normalizedInput = normalizeDuration(dataLife, maxDataLife.unit);
-      const normalizedMax = parseInt(maxDataLife.number);
-      
-      if (normalizedInput > normalizedMax) {
-        errors.dataLife = `Maximum allowed is ${maxDataLife.number} ${maxDataLife.unit}`;
+      const validationError = validateDuration(dataLife, maxDataLife);
+      if (validationError) {
+        errors.dataLife = validationError;
       }
     }
     
@@ -539,8 +573,9 @@ const ConsentParamItem = ({
                       value={field.value}
                       onChange={field.onChange}
                       units={["Day", "Month", "Year"]}
-                      maxValue={maxConsentValidity?.number ? parseInt(maxConsentValidity.number) : undefined}
+                      maxValue={maxConsentValidity}
                       error={validationErrors.consentValidity}
+                      targetUnit={maxConsentValidity?.unit}
                     />
                   </FormControl>
                 )}
@@ -556,21 +591,26 @@ const ConsentParamItem = ({
                 name={`consentParams.${index}.fetchType`}
                 render={({ field }) => (
                   <FormControl>
-                    <ToggleButtonGroup
-                      options={["Onetime", "Periodic"]}
-                      value={field.value || "Onetime"}
-                      onChange={field.onChange}
-                    />
+                    {requiredFetchType ? (
+                      <div>
+                        <p className="text-sm">
+                          {requiredFetchType === "ONE-TIME" ? "Onetime" : "Periodic"}
+                        </p>
+                        <p className="text-sm text-amber-600 mt-1 flex items-center">
+                          <AlertCircle className="h-3 w-3 mr-1" /> 
+                          Only {requiredFetchType === "ONE-TIME" ? "Onetime" : "Periodic"} is allowed for this template
+                        </p>
+                      </div>
+                    ) : (
+                      <ToggleButtonGroup
+                        options={["Onetime", "Periodic"]}
+                        value={field.value || "Onetime"}
+                        onChange={field.onChange}
+                      />
+                    )}
                   </FormControl>
                 )}
               />
-              
-              {requiredFetchType && (
-                <p className="text-sm text-amber-600 mt-1 flex items-center">
-                  <AlertCircle className="h-3 w-3 mr-1" /> 
-                  Required fetch type: {requiredFetchType === "ONE-TIME" ? "Onetime" : "Periodic"}
-                </p>
-              )}
             </td>
           </tr>
           
@@ -681,7 +721,7 @@ const ConsentParamItem = ({
                         value={field.value}
                         onChange={field.onChange}
                         units={["Day", "Month", "Year"]}
-                        maxValue={maxFrequency?.number ? parseInt(maxFrequency.number) : undefined}
+                        maxValue={maxFrequency}
                         error={validationErrors.frequency}
                       />
                     </FormControl>
@@ -703,8 +743,9 @@ const ConsentParamItem = ({
                       value={field.value}
                       onChange={field.onChange}
                       units={["Day", "Month", "Year"]}
-                      maxValue={maxFiDataRange?.number ? parseInt(maxFiDataRange.number) : undefined}
+                      maxValue={maxFiDataRange}
                       error={validationErrors.fiDataRange}
+                      targetUnit={maxFiDataRange?.unit}
                     />
                   </FormControl>
                 )}
@@ -724,8 +765,9 @@ const ConsentParamItem = ({
                       value={field.value}
                       onChange={field.onChange}
                       units={["Day", "Month", "Year"]}
-                      maxValue={maxDataLife?.number ? parseInt(maxDataLife.number) : undefined}
+                      maxValue={maxDataLife}
                       error={validationErrors.dataLife}
+                      targetUnit={maxDataLife?.unit}
                     />
                   </FormControl>
                 )}

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { 
@@ -36,6 +37,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import formFields from "@/data/formFields.json";
 import { ConsentTemplate, ConsentTemplateMap, ConsentTemplatesMap } from "@/validation/consentParametersSchema";
+import { useToast } from "@/hooks/use-toast";
 
 // Type-safe access to formFields.consentTemplates
 const consentTemplates = formFields.consentTemplates as ConsentTemplatesMap;
@@ -371,10 +373,12 @@ const ConsentParamItem = ({
   setValue: any;
   regulator: string;
 }) => {
+  const { toast } = useToast();
   const usecaseCategory = watch(`consentParams.${index}.usecaseCategory`) || "";
   const purposeCode = watch(`consentParams.${index}.purposeCode`) || "";
   const fetchType = watch(`consentParams.${index}.fetchType`) || "Onetime";
   const consentTypes = watch(`consentParams.${index}.consentType`) || [];
+  const fiTypes = watch(`consentParams.${index}.fiTypes`) || [];
   
   // Validation errors
   const [validationErrors, setValidationErrors] = useState<{
@@ -406,15 +410,55 @@ const ConsentParamItem = ({
   const maxConsentValidity = currentTemplate?.maxConsentValidity ? parsePeriodString(currentTemplate.maxConsentValidity) : null;
   const maxDataLife = currentTemplate?.maxDataLife ? parsePeriodString(currentTemplate.maxDataLife) : null;
   
+  // Set fetch type from template when purpose code changes
+  useEffect(() => {
+    if (currentTemplate?.fetchType) {
+      setValue(`consentParams.${index}.fetchType`, 
+        currentTemplate.fetchType === "ONE-TIME" ? "Onetime" : "Periodic"
+      );
+    }
+  }, [currentTemplate, setValue, index]);
+  
+  // Clear invalid consent types when FI Types change
+  useEffect(() => {
+    if (fiTypes.length > 0 && allowedConsentTypes.length > 0) {
+      // Get the current invalid types
+      const currentConsentTypes = watch(`consentParams.${index}.consentType`) || [];
+      const invalidTypes = currentConsentTypes.filter(
+        (type: string) => !allowedConsentTypes.includes(type)
+      );
+      
+      // If there are invalid types, remove them and notify the user
+      if (invalidTypes.length > 0) {
+        const validTypes = currentConsentTypes.filter(
+          (type: string) => allowedConsentTypes.includes(type)
+        );
+        
+        setValue(`consentParams.${index}.consentType`, validTypes);
+        
+        if (invalidTypes.length > 0) {
+          toast({
+            title: "Consent Types Updated",
+            description: `Some consent types were removed because they are not allowed for the selected template.`,
+            variant: "destructive",
+          });
+        }
+      }
+    }
+  }, [fiTypes, allowedConsentTypes, index, setValue, watch, toast]);
+  
   // Validate values when template or key value changes
   useEffect(() => {
-    if (!currentTemplate) return;
+    if (!currentTemplate) {
+      setValidationErrors({});
+      return;
+    }
     
     const errors: any = {};
     
     // Validate consent validity
     const consentValidity = watch(`consentParams.${index}.consentValidityPeriod`);
-    if (consentValidity && maxConsentValidity) {
+    if (consentValidity?.number && maxConsentValidity) {
       const validationError = validateDuration(consentValidity, maxConsentValidity);
       if (validationError) {
         errors.consentValidity = validationError;
@@ -424,7 +468,7 @@ const ConsentParamItem = ({
     // Validate frequency
     if (fetchType === "Periodic") {
       const frequency = watch(`consentParams.${index}.dataFetchFrequency`);
-      if (frequency && maxFrequency) {
+      if (frequency?.number && maxFrequency) {
         const validationError = validateDuration(frequency, maxFrequency);
         if (validationError) {
           errors.frequency = validationError;
@@ -434,7 +478,7 @@ const ConsentParamItem = ({
     
     // Validate FI data range
     const fiDataRange = watch(`consentParams.${index}.fiDataRange`);
-    if (fiDataRange && maxFiDataRange) {
+    if (fiDataRange?.number && maxFiDataRange) {
       const validationError = validateDuration(fiDataRange, maxFiDataRange);
       if (validationError) {
         errors.fiDataRange = validationError;
@@ -443,7 +487,7 @@ const ConsentParamItem = ({
     
     // Validate data life
     const dataLife = watch(`consentParams.${index}.dataLife`);
-    if (dataLife && maxDataLife) {
+    if (dataLife?.number && maxDataLife) {
       const validationError = validateDuration(dataLife, maxDataLife);
       if (validationError) {
         errors.dataLife = validationError;
@@ -475,16 +519,11 @@ const ConsentParamItem = ({
     }
     
     setValidationErrors(errors);
-  }, [currentTemplate, usecaseCategory, purposeCode, fetchType, watch, index, allowedConsentTypes, allowedFiTypes]);
-  
-  // Set fetch type from template when purpose code changes
-  useEffect(() => {
-    if (currentTemplate?.fetchType) {
-      setValue(`consentParams.${index}.fetchType`, 
-        currentTemplate.fetchType === "ONE-TIME" ? "Onetime" : "Periodic"
-      );
-    }
-  }, [currentTemplate, setValue, index]);
+  }, [
+    currentTemplate, usecaseCategory, purposeCode, fetchType, 
+    watch, index, allowedConsentTypes, allowedFiTypes,
+    fiTypes
+  ]);
   
   return (
     <div className="border rounded-md">
@@ -505,6 +544,7 @@ const ConsentParamItem = ({
                         // Reset dependent fields
                         setValue(`consentParams.${index}.purposeCode`, "");
                         setValue(`consentParams.${index}.fiTypes`, []);
+                        setValue(`consentParams.${index}.consentType`, []);
                       }}
                     >
                       <SelectTrigger>
@@ -539,6 +579,7 @@ const ConsentParamItem = ({
                         field.onChange(value);
                         // Reset dependent fields
                         setValue(`consentParams.${index}.fiTypes`, []);
+                        setValue(`consentParams.${index}.consentType`, []);
                       }}
                     />
                   </FormControl>
@@ -581,6 +622,12 @@ const ConsentParamItem = ({
                   </FormControl>
                 )}
               />
+              {maxConsentValidity && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Maximum allowed: {maxConsentValidity.number} {maxConsentValidity.unit}
+                  {Number(maxConsentValidity.number) !== 1 ? 's' : ''}
+                </p>
+              )}
             </td>
           </tr>
           
@@ -597,6 +644,13 @@ const ConsentParamItem = ({
                         <p className="text-sm">
                           {requiredFetchType === "ONE-TIME" ? "Onetime" : "Periodic"}
                         </p>
+                        <input
+                          type="hidden"
+                          value={requiredFetchType === "ONE-TIME" ? "Onetime" : "Periodic"}
+                          onChange={() => {
+                            field.onChange(requiredFetchType === "ONE-TIME" ? "Onetime" : "Periodic");
+                          }}
+                        />
                         <p className="text-sm text-amber-600 mt-1 flex items-center">
                           <AlertCircle className="h-3 w-3 mr-1" /> 
                           Only {requiredFetchType === "ONE-TIME" ? "Onetime" : "Periodic"} is allowed for this template
@@ -624,7 +678,7 @@ const ConsentParamItem = ({
                 render={({ field }) => (
                   <FormControl>
                     <div className="space-y-2">
-                      {allowedFiTypes.length > 0 ? (
+                      {allowedFiTypes && allowedFiTypes.length > 0 ? (
                         <div className="grid grid-cols-2 gap-2">
                           {allowedFiTypes.map((type) => (
                             <div key={type} className="flex items-center space-x-2">
@@ -685,27 +739,29 @@ const ConsentParamItem = ({
                 name={`consentParams.${index}.consentType`}
                 render={({ field }) => (
                   <FormControl>
-                    <ToggleButtonGroup
-                      options={["Profile", "Summary", "Transactions"]}
-                      value={field.value || []}
-                      onChange={field.onChange}
-                      multiple={true}
-                    />
+                    <div className="space-y-2">
+                      <ToggleButtonGroup
+                        options={allowedConsentTypes.length > 0 ? allowedConsentTypes : ["Profile", "Summary", "Transactions"]}
+                        value={field.value || []}
+                        onChange={field.onChange}
+                        multiple={true}
+                      />
+                    
+                      {Array.isArray(allowedConsentTypes) && allowedConsentTypes.length > 0 && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Allowed: {allowedConsentTypes.join(', ')}
+                        </p>
+                      )}
+                      
+                      {validationErrors.consentType && (
+                        <p className="text-destructive text-sm flex items-center">
+                          <AlertCircle className="h-3 w-3 mr-1" /> {validationErrors.consentType}
+                        </p>
+                      )}
+                    </div>
                   </FormControl>
                 )}
               />
-              
-              {Array.isArray(allowedConsentTypes) && allowedConsentTypes.length > 0 && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Allowed: {allowedConsentTypes.join(', ')}
-                </p>
-              )}
-              
-              {validationErrors.consentType && (
-                <p className="text-destructive text-sm flex items-center">
-                  <AlertCircle className="h-3 w-3 mr-1" /> {validationErrors.consentType}
-                </p>
-              )}
             </td>
           </tr>
           
@@ -728,6 +784,11 @@ const ConsentParamItem = ({
                     </FormControl>
                   )}
                 />
+                {maxFrequency && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Maximum allowed: {maxFrequency.number} times per {maxFrequency.unit}
+                  </p>
+                )}
               </td>
             </tr>
           )}
@@ -751,6 +812,12 @@ const ConsentParamItem = ({
                   </FormControl>
                 )}
               />
+              {maxFiDataRange && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Maximum allowed: {maxFiDataRange.number} {maxFiDataRange.unit}
+                  {Number(maxFiDataRange.number) !== 1 ? 's' : ''}
+                </p>
+              )}
             </td>
           </tr>
           
@@ -773,6 +840,12 @@ const ConsentParamItem = ({
                   </FormControl>
                 )}
               />
+              {maxDataLife && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Maximum allowed: {maxDataLife.number} {maxDataLife.unit}
+                  {Number(maxDataLife.number) !== 1 ? 's' : ''}
+                </p>
+              )}
             </td>
           </tr>
         </tbody>

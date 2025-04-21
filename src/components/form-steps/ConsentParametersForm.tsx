@@ -36,7 +36,15 @@ import {
 } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import formFields from "@/data/formFields.json";
-import { ConsentTemplate, ConsentTemplateMap, ConsentTemplatesMap } from "@/validation/consentParametersSchema";
+import { 
+  ConsentTemplate, 
+  ConsentTemplateMap, 
+  ConsentTemplatesMap,
+  Duration,
+  validateDuration,
+  parseFrequencyString,
+  parsePeriodString
+} from "@/validation/consentParametersSchema";
 import { useToast } from "@/hooks/use-toast";
 
 // Type-safe access to formFields.consentTemplates
@@ -112,54 +120,14 @@ const getPurposeCodes = (regulator: string, usecaseCategory: string) => {
 
 // Interface for duration inputs
 interface DurationInputProps {
-  value: {number: string; unit: string;} | undefined;
-  onChange: (value: {number: string; unit: string;}) => void;
+  value: Duration | undefined;
+  onChange: (value: Duration) => void;
   units: string[];
   placeholder?: string;
-  maxValue?: {number: string, unit: string} | null;
+  maxValue?: Duration | null;
   error?: string;
   targetUnit?: string;
 }
-
-// Convert time to days for normalization
-const toDays = (value: number, unit: string): number => {
-  switch (unit.toLowerCase()) {
-    case 'day': return value;
-    case 'month': return value * 30; // Approximation
-    case 'year': return value * 365; // Approximation
-    default: return value;
-  }
-};
-
-// Convert days to target unit
-const fromDays = (days: number, targetUnit: string): number => {
-  switch (targetUnit.toLowerCase()) {
-    case 'day': return days;
-    case 'month': return days / 30; // Approximation
-    case 'year': return days / 365; // Approximation
-    default: return days;
-  }
-};
-
-// Validate duration against maximum value
-const validateDuration = (
-  input: {number: string, unit: string} | undefined,
-  maxValue: {number: string, unit: string} | null
-): string | undefined => {
-  if (!input || !input.number || !maxValue || !maxValue.number) return undefined;
-  
-  // Convert both to days for comparison
-  const inputDays = toDays(Number(input.number), input.unit);
-  const maxDays = toDays(Number(maxValue.number), maxValue.unit);
-  
-  if (inputDays > maxDays) {
-    // Convert max days to the input unit for display
-    const convertedMax = Math.floor(fromDays(maxDays, input.unit));
-    return `Maximum allowed is ${convertedMax} ${input.unit}${convertedMax !== 1 ? 's' : ''}`;
-  }
-  
-  return undefined;
-};
 
 const DurationInput = ({ 
   value, 
@@ -271,52 +239,6 @@ const FrequencyInput = ({
   );
 };
 
-// Parse template strings like "31 times per month" to extract value and unit
-const parseFrequencyString = (frequencyStr: string): { number: string, unit: string } | null => {
-  if (!frequencyStr || frequencyStr === "NA") return null;
-  
-  const regex = /(\d+)\s+times?\s+per\s+(\w+)/i;
-  const match = frequencyStr.match(regex);
-  
-  if (match) {
-    return {
-      number: match[1],
-      unit: match[2].toLowerCase()
-    };
-  }
-  
-  return null;
-};
-
-// Parse period strings like "1 Month", "6 months", "20 years"
-const parsePeriodString = (periodStr: string): { number: string, unit: string } | null => {
-  if (!periodStr || periodStr === "NA") return null;
-  
-  // Handle special cases
-  if (periodStr.toLowerCase().includes("coterminous")) {
-    return {
-      number: "999", // Special value for coterminous
-      unit: "tenure"
-    };
-  }
-  
-  const regex = /(\d+)\s+(\w+)/i;
-  const match = periodStr.match(regex);
-  
-  if (match) {
-    let unit = match[2].toLowerCase();
-    // Convert to singular form if needed
-    if (unit.endsWith('s')) unit = unit.slice(0, -1);
-    
-    return {
-      number: match[1],
-      unit: unit
-    };
-  }
-  
-  return null;
-};
-
 // Function to get the appropriate template based on filters
 const getFilteredTemplate = (
   regulator: string, 
@@ -380,7 +302,7 @@ const ConsentParamItem = ({
   const consentTypes = watch(`consentParams.${index}.consentType`) || [];
   const fiTypes = watch(`consentParams.${index}.fiTypes`) || [];
   
-  // Validation errors
+  // Validation errors state
   const [validationErrors, setValidationErrors] = useState<{
     consentValidity?: string;
     frequency?: string;
@@ -463,6 +385,9 @@ const ConsentParamItem = ({
       if (validationError) {
         errors.consentValidity = validationError;
       }
+    } else {
+      // Clear error if no input value or if the value is valid
+      delete errors.consentValidity;
     }
     
     // Validate frequency
@@ -473,7 +398,13 @@ const ConsentParamItem = ({
         if (validationError) {
           errors.frequency = validationError;
         }
+      } else {
+        // Clear error if no input value or if the value is valid
+        delete errors.frequency;
       }
+    } else {
+      // Clear frequency error if fetch type is not Periodic
+      delete errors.frequency;
     }
     
     // Validate FI data range
@@ -483,6 +414,9 @@ const ConsentParamItem = ({
       if (validationError) {
         errors.fiDataRange = validationError;
       }
+    } else {
+      // Clear error if no input value or if the value is valid
+      delete errors.fiDataRange;
     }
     
     // Validate data life
@@ -492,6 +426,9 @@ const ConsentParamItem = ({
       if (validationError) {
         errors.dataLife = validationError;
       }
+    } else {
+      // Clear error if no input value or if the value is valid
+      delete errors.dataLife;
     }
     
     // Validate consent types
@@ -518,11 +455,94 @@ const ConsentParamItem = ({
       }
     }
     
+    // Update validation errors state
     setValidationErrors(errors);
   }, [
     currentTemplate, usecaseCategory, purposeCode, fetchType, 
     watch, index, allowedConsentTypes, allowedFiTypes,
-    fiTypes
+    consentTypes, fiTypes
+  ]);
+  
+  // Re-validate when user inputs new values
+  useEffect(() => {
+    const consentValidity = watch(`consentParams.${index}.consentValidityPeriod`);
+    if (consentValidity) {
+      // Re-validate to clear or set error
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        if (maxConsentValidity) {
+          const error = validateDuration(consentValidity, maxConsentValidity);
+          if (error) {
+            newErrors.consentValidity = error;
+          } else {
+            delete newErrors.consentValidity;
+          }
+        }
+        return newErrors;
+      });
+    }
+    
+    const fiDataRange = watch(`consentParams.${index}.fiDataRange`);
+    if (fiDataRange) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        if (maxFiDataRange) {
+          const error = validateDuration(fiDataRange, maxFiDataRange);
+          if (error) {
+            newErrors.fiDataRange = error;
+          } else {
+            delete newErrors.fiDataRange;
+          }
+        }
+        return newErrors;
+      });
+    }
+    
+    const dataLife = watch(`consentParams.${index}.dataLife`);
+    if (dataLife) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        if (maxDataLife) {
+          const error = validateDuration(dataLife, maxDataLife);
+          if (error) {
+            newErrors.dataLife = error;
+          } else {
+            delete newErrors.dataLife;
+          }
+        }
+        return newErrors;
+      });
+    }
+    
+    if (fetchType === "Periodic") {
+      const frequency = watch(`consentParams.${index}.dataFetchFrequency`);
+      if (frequency) {
+        setValidationErrors(prev => {
+          const newErrors = { ...prev };
+          if (maxFrequency) {
+            const error = validateDuration(frequency, maxFrequency);
+            if (error) {
+              newErrors.frequency = error;
+            } else {
+              delete newErrors.frequency;
+            }
+          }
+          return newErrors;
+        });
+      }
+    }
+  }, [
+    watch(`consentParams.${index}.consentValidityPeriod`),
+    watch(`consentParams.${index}.fiDataRange`),
+    watch(`consentParams.${index}.dataLife`),
+    watch(`consentParams.${index}.dataFetchFrequency`),
+    fetchType,
+    maxConsentValidity,
+    maxFiDataRange,
+    maxDataLife,
+    maxFrequency,
+    index,
+    watch
   ]);
   
   return (
@@ -545,6 +565,8 @@ const ConsentParamItem = ({
                         setValue(`consentParams.${index}.purposeCode`, "");
                         setValue(`consentParams.${index}.fiTypes`, []);
                         setValue(`consentParams.${index}.consentType`, []);
+                        // Clear validation errors when changing usecase
+                        setValidationErrors({});
                       }}
                     >
                       <SelectTrigger>
@@ -580,6 +602,8 @@ const ConsentParamItem = ({
                         // Reset dependent fields
                         setValue(`consentParams.${index}.fiTypes`, []);
                         setValue(`consentParams.${index}.consentType`, []);
+                        // Clear validation errors when changing purpose code
+                        setValidationErrors({});
                       }}
                     />
                   </FormControl>
@@ -613,7 +637,17 @@ const ConsentParamItem = ({
                   <FormControl>
                     <DurationInput
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        // Directly validate and update error state
+                        if (maxConsentValidity) {
+                          const error = validateDuration(value, maxConsentValidity);
+                          setValidationErrors(prev => ({
+                            ...prev, 
+                            consentValidity: error
+                          }));
+                        }
+                      }}
                       units={["Day", "Month", "Year"]}
                       maxValue={maxConsentValidity}
                       error={validationErrors.consentValidity}
@@ -660,7 +694,17 @@ const ConsentParamItem = ({
                       <ToggleButtonGroup
                         options={["Onetime", "Periodic"]}
                         value={field.value || "Onetime"}
-                        onChange={field.onChange}
+                        onChange={(value) => {
+                          field.onChange(value);
+                          // Clear frequency validation errors if switching from Periodic
+                          if (value !== "Periodic") {
+                            setValidationErrors(prev => {
+                              const newErrors = { ...prev };
+                              delete newErrors.frequency;
+                              return newErrors;
+                            });
+                          }
+                        }}
                       />
                     )}
                   </FormControl>
@@ -700,6 +744,18 @@ const ConsentParamItem = ({
                                   }
                                   
                                   field.onChange(newValues);
+                                  
+                                  // Clear consent types when changing FI types
+                                  if (allowedConsentTypes.length > 0) {
+                                    const currentConsentTypes = watch(`consentParams.${index}.consentType`) || [];
+                                    const validTypes = currentConsentTypes.filter(
+                                      (cType: string) => allowedConsentTypes.includes(cType)
+                                    );
+                                    
+                                    if (validTypes.length !== currentConsentTypes.length) {
+                                      setValue(`consentParams.${index}.consentType`, validTypes);
+                                    }
+                                  }
                                 }}
                               />
                               <label
@@ -743,7 +799,28 @@ const ConsentParamItem = ({
                       <ToggleButtonGroup
                         options={allowedConsentTypes.length > 0 ? allowedConsentTypes : ["Profile", "Summary", "Transactions"]}
                         value={field.value || []}
-                        onChange={field.onChange}
+                        onChange={(value) => {
+                          field.onChange(value);
+                          // Validate consent types
+                          if (allowedConsentTypes.length > 0) {
+                            const invalidTypes = (Array.isArray(value) ? value : [value]).filter(
+                              (type) => !allowedConsentTypes.includes(type)
+                            );
+                            
+                            if (invalidTypes.length > 0) {
+                              setValidationErrors(prev => ({
+                                ...prev,
+                                consentType: `Only ${allowedConsentTypes.join(', ')} are allowed for this template`
+                              }));
+                            } else {
+                              setValidationErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors.consentType;
+                                return newErrors;
+                              });
+                            }
+                          }
+                        }}
                         multiple={true}
                       />
                     
@@ -776,7 +853,17 @@ const ConsentParamItem = ({
                     <FormControl>
                       <FrequencyInput
                         value={field.value}
-                        onChange={field.onChange}
+                        onChange={(value) => {
+                          field.onChange(value);
+                          // Direct validation for frequency
+                          if (maxFrequency) {
+                            const error = validateDuration(value, maxFrequency);
+                            setValidationErrors(prev => ({
+                              ...prev, 
+                              frequency: error
+                            }));
+                          }
+                        }}
                         units={["Day", "Month", "Year"]}
                         maxValue={maxFrequency}
                         error={validationErrors.frequency}
@@ -803,7 +890,17 @@ const ConsentParamItem = ({
                   <FormControl>
                     <DurationInput
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        // Direct validation for fiDataRange
+                        if (maxFiDataRange) {
+                          const error = validateDuration(value, maxFiDataRange);
+                          setValidationErrors(prev => ({
+                            ...prev, 
+                            fiDataRange: error
+                          }));
+                        }
+                      }}
                       units={["Day", "Month", "Year"]}
                       maxValue={maxFiDataRange}
                       error={validationErrors.fiDataRange}
@@ -831,7 +928,17 @@ const ConsentParamItem = ({
                   <FormControl>
                     <DurationInput
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        // Direct validation for dataLife
+                        if (maxDataLife) {
+                          const error = validateDuration(value, maxDataLife);
+                          setValidationErrors(prev => ({
+                            ...prev, 
+                            dataLife: error
+                          }));
+                        }
+                      }}
                       units={["Day", "Month", "Year"]}
                       maxValue={maxDataLife}
                       error={validationErrors.dataLife}

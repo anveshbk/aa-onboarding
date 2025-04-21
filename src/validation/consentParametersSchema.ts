@@ -115,12 +115,16 @@ export const parsePeriodString = (periodStr: string): Duration | null => {
   return null;
 };
 
-// Validate duration against maximum value
+// Validate duration against maximum value - fixed to handle clearing errors properly
 export const validateDuration = (
   input: Duration | undefined,
   maxValue: Duration | null
 ): string | undefined => {
+  // If no input or maxValue, no validation needed
   if (!input || !input.number || !maxValue || !maxValue.number) return undefined;
+  
+  // If input value is empty string, no validation needed (clearing the field)
+  if (input.number.trim() === "") return undefined;
   
   // Convert both to days for comparison
   const inputDays = toDays(Number(input.number), input.unit);

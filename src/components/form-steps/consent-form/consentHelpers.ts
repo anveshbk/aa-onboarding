@@ -2,6 +2,19 @@
 import { ConsentTemplate, ConsentTemplatesMap } from "@/validation/consentParametersSchema";
 import formFields from "@/data/formFields.json";
 
+// Define proper types for the template structures
+interface TemplateData {
+  usecaseCategory?: string;
+  purposeText?: string;
+  maxConsentValidity?: string;
+  maxFiDataRange?: string;
+  maxDataLife?: string;
+  fetchType?: string;
+  maxFrequency?: string;
+  fiTypes?: string[];
+  consentType?: string[];
+}
+
 export const getUsecaseCategories = (regulator: string) => {
   const categories = new Set<string>();
   
@@ -9,10 +22,12 @@ export const getUsecaseCategories = (regulator: string) => {
     Object.values(formFields.consentTemplates[regulator]).forEach(template => {
       if (Array.isArray(template)) {
         template.forEach(t => {
-          if (t.usecaseCategory) categories.add(t.usecaseCategory);
+          const typedTemplate = t as TemplateData;
+          if (typedTemplate.usecaseCategory) categories.add(typedTemplate.usecaseCategory);
         });
-      } else if (template.usecaseCategory) {
-        categories.add(template.usecaseCategory);
+      } else {
+        const typedTemplate = template as TemplateData;
+        if (typedTemplate.usecaseCategory) categories.add(typedTemplate.usecaseCategory);
       }
     });
   }
@@ -21,10 +36,12 @@ export const getUsecaseCategories = (regulator: string) => {
     Object.values(formFields.consentTemplates["All"]).forEach(template => {
       if (Array.isArray(template)) {
         template.forEach(t => {
-          if (t.usecaseCategory) categories.add(t.usecaseCategory);
+          const typedTemplate = t as TemplateData;
+          if (typedTemplate.usecaseCategory) categories.add(typedTemplate.usecaseCategory);
         });
-      } else if (template.usecaseCategory) {
-        categories.add(template.usecaseCategory);
+      } else {
+        const typedTemplate = template as TemplateData;
+        if (typedTemplate.usecaseCategory) categories.add(typedTemplate.usecaseCategory);
       }
     });
   }
@@ -41,10 +58,10 @@ export const getPurposeCodes = (regulator: string, usecaseCategory: string) => {
   const extractPurposeCodes = (regulatorTemplates: any) => {
     Object.entries(regulatorTemplates).forEach(([code, templateData]) => {
       if (Array.isArray(templateData)) {
-        if (templateData.some(t => t.usecaseCategory === usecaseCategory)) {
+        if (templateData.some(t => (t as TemplateData).usecaseCategory === usecaseCategory)) {
           codes.push(code);
         }
-      } else if (templateData.usecaseCategory === usecaseCategory) {
+      } else if ((templateData as TemplateData).usecaseCategory === usecaseCategory) {
         codes.push(code);
       }
     });

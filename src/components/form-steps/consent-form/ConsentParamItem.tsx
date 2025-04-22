@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -57,17 +58,10 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
   const usecaseCategories = getUsecaseCategories(regulator);
   const purposeCodes = getPurposeCodes(regulator, usecaseCategory);
   
-  // Get the current template based on all selected values
+  // Get the current template based on the selected FI type (if any)
   const selectedFiType = fiTypes.length > 0 ? fiTypes[0] : undefined;
   const currentTemplate = usecaseCategory && purposeCode 
-    ? getFilteredTemplate(
-        regulator, 
-        purposeCode, 
-        usecaseCategory, 
-        selectedFiType,
-        fetchType,
-        consentTypes
-      ) 
+    ? getFilteredTemplate(regulator, purposeCode, usecaseCategory, selectedFiType) 
     : null;
   
   const allowedFiTypes = currentTemplate?.fiTypes || [];
@@ -85,17 +79,10 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
     setValidationErrors({});
   }, [currentTemplate]);
   
-  // Update template values when any relevant field changes
+  // Update template values when FI type changes
   useEffect(() => {
-    if (usecaseCategory && purposeCode) {
-      const newTemplate = getFilteredTemplate(
-        regulator, 
-        purposeCode, 
-        usecaseCategory, 
-        selectedFiType,
-        fetchType,
-        consentTypes
-      );
+    if (usecaseCategory && purposeCode && fiTypes.length > 0) {
+      const newTemplate = getFilteredTemplate(regulator, purposeCode, usecaseCategory, fiTypes[0]);
       
       // Reset validation errors
       setValidationErrors({});
@@ -124,7 +111,7 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
       updateDurationField('fiDataRange', maxFiDataRange);
       updateDurationField('dataLife', maxDataLife);
     }
-  }, [fiTypes, usecaseCategory, purposeCode, regulator, setValue, index, watch, fetchType, consentTypes]);
+  }, [fiTypes, usecaseCategory, purposeCode, regulator, setValue, index, watch]);
   
   useEffect(() => {
     if (currentTemplate?.fetchType) {
@@ -357,7 +344,6 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
                       maxValue={maxConsentValidity}
                       error={validationErrors.consentValidity}
                       required={isFieldRequired('consentValidityPeriod')}
-                      disabled={isCoterminous}
                     />
                   </FormControl>
                 )}

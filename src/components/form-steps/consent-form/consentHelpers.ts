@@ -127,3 +127,39 @@ export const isFieldRequired = (fieldName: string): boolean => {
   const field = formFields.consentParameters?.consentParamFields?.find(f => f.id === fieldName);
   return field?.required === true;
 };
+
+// Helper function to format the max validity period for display
+export const formatMaxValidity = (maxConsentValidity: string | undefined): string => {
+  if (!maxConsentValidity) return "";
+  
+  // Special handling for "Coterminous with loan tenure"
+  if (maxConsentValidity.toLowerCase().includes("coterminous")) {
+    return "Coterminous with loan tenure";
+  }
+  
+  return maxConsentValidity;
+};
+
+// Helper function to convert frequency between different units
+export const convertFrequencyToTemplateUnit = (
+  value: number, 
+  fromUnit: string, 
+  toUnit: string
+): number => {
+  // Convert from current unit to days first
+  let valueInDays = value;
+  if (fromUnit.toLowerCase() === "month") {
+    valueInDays = value * 30; // Approximate conversion
+  } else if (fromUnit.toLowerCase() === "year") {
+    valueInDays = value * 365; // Approximate conversion
+  }
+  
+  // Then convert from days to the target unit
+  if (toUnit.toLowerCase() === "month") {
+    return Math.ceil(valueInDays / 30); // Convert days to months
+  } else if (toUnit.toLowerCase() === "year") {
+    return Math.ceil(valueInDays / 365); // Convert days to years
+  }
+  
+  return valueInDays; // Return in days if target unit is also days
+};

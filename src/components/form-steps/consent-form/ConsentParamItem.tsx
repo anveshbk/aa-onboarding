@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -10,8 +11,20 @@ import { AlertCircle, Trash } from "lucide-react";
 import { ToggleButtonGroup } from "@/components/ui/toggle-button-group";
 import DurationInput from "./DurationInput";
 import FrequencyInput from "./FrequencyInput";
-import { getUsecaseCategories, getPurposeCodes, getFilteredTemplate, isFieldRequired } from "./consentHelpers";
-import { parseFrequencyString, parsePeriodString, validateDuration, convertDuration } from "@/validation/consentParametersSchema";
+import { 
+  getUsecaseCategories, 
+  getPurposeCodes, 
+  getFilteredTemplate, 
+  isFieldRequired,
+  formatMaxValidity 
+} from "./consentHelpers";
+import { 
+  parseFrequencyString, 
+  parsePeriodString, 
+  validateDuration, 
+  convertDuration, 
+  durationToString 
+} from "@/validation/consentParametersSchema";
 
 interface ConsentParamItemProps {
   index: number;
@@ -59,6 +72,8 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
   const maxFiDataRange = currentTemplate?.maxFiDataRange ? parsePeriodString(currentTemplate.maxFiDataRange) : null;
   const maxConsentValidity = currentTemplate?.maxConsentValidity ? parsePeriodString(currentTemplate.maxConsentValidity) : null;
   const maxDataLife = currentTemplate?.maxDataLife ? parsePeriodString(currentTemplate.maxDataLife) : null;
+  
+  const isCoterminous = currentTemplate?.maxConsentValidity?.toLowerCase().includes("coterminous") || false;
   
   useEffect(() => {
     setValidationErrors({});
@@ -319,23 +334,35 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
                 name={`consentParams.${index}.consentValidityPeriod`}
                 render={({ field }) => (
                   <FormControl>
-                    <DurationInput
-                      value={field.value}
-                      onChange={(value) => {
-                        field.onChange(value);
-                        validateField('consentValidity', value, maxConsentValidity);
-                      }}
-                      units={["Day", "Month", "Year"]}
-                      maxValue={maxConsentValidity}
-                      error={validationErrors.consentValidity}
-                      required={isFieldRequired('consentValidityPeriod')}
-                    />
+                    {isCoterminous ? (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Coterminous with loan tenure</p>
+                        <input type="hidden" value={JSON.stringify({number: "999", unit: "tenure"})} />
+                      </div>
+                    ) : (
+                      <DurationInput
+                        value={field.value}
+                        onChange={(value) => {
+                          field.onChange(value);
+                          validateField('consentValidity', value, maxConsentValidity);
+                        }}
+                        units={["Day", "Month", "Year"]}
+                        maxValue={maxConsentValidity}
+                        error={validationErrors.consentValidity}
+                        required={isFieldRequired('consentValidityPeriod')}
+                      />
+                    )}
                   </FormControl>
                 )}
               />
-              {maxConsentValidity && (
+              {maxConsentValidity && !isCoterminous && (
                 <p className="text-sm text-muted-foreground mt-1">
                   Maximum allowed: {maxConsentValidity.number} {maxConsentValidity.unit}
+                </p>
+              )}
+              {isCoterminous && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {formatMaxValidity(currentTemplate?.maxConsentValidity)}
                 </p>
               )}
             </td>

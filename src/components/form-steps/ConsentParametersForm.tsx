@@ -324,9 +324,10 @@ const ConsentParamItem = ({
   const maxConsentValidity = currentTemplate?.maxConsentValidity ? parsePeriodString(currentTemplate.maxConsentValidity) : null;
   const maxDataLife = currentTemplate?.maxDataLife ? parsePeriodString(currentTemplate.maxDataLife) : null;
   
-  // Get whether fields are required from JSON (if available)
+  // Get whether fields are required by checking the consentParamFields in formFields.json
   const isFieldRequired = (fieldName: string): boolean => {
-    return formFields.requiredFields?.[fieldName] === true;
+    const field = formFields.consentParameters?.consentParamFields?.find(f => f.id === fieldName);
+    return field?.required === true;
   };
   
   useEffect(() => {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { 
@@ -47,14 +46,11 @@ import {
 } from "@/validation/consentParametersSchema";
 import { useToast } from "@/hooks/use-toast";
 
-// Type-safe access to formFields.consentTemplates
 const consentTemplates = formFields.consentTemplates as ConsentTemplatesMap;
 
-// Get usecase categories based on regulator
 const getUsecaseCategories = (regulator: string) => {
   const categories = new Set<string>();
   
-  // Add categories for the specific regulator
   if (consentTemplates[regulator]) {
     Object.values(consentTemplates[regulator]).forEach(template => {
       if (Array.isArray(template)) {
@@ -67,7 +63,6 @@ const getUsecaseCategories = (regulator: string) => {
     });
   }
   
-  // Add categories from the "All" regulator
   if (consentTemplates["All"]) {
     Object.values(consentTemplates["All"]).forEach(template => {
       if (Array.isArray(template)) {
@@ -83,18 +78,15 @@ const getUsecaseCategories = (regulator: string) => {
   return Array.from(categories);
 };
 
-// Get purpose codes based on regulator and usecase category
 const getPurposeCodes = (regulator: string, usecaseCategory: string) => {
   if (!regulator || !usecaseCategory) return [];
   
   const templates = consentTemplates;
   let codes: string[] = [];
   
-  // Function to extract purpose codes from templates
   const extractPurposeCodes = (regulatorTemplates: ConsentTemplateMap) => {
     Object.entries(regulatorTemplates).forEach(([code, templateData]) => {
       if (Array.isArray(templateData)) {
-        // Check if any template in the array matches the usecase category
         if (templateData.some(t => t.usecaseCategory === usecaseCategory)) {
           codes.push(code);
         }
@@ -104,30 +96,16 @@ const getPurposeCodes = (regulator: string, usecaseCategory: string) => {
     });
   };
   
-  // Get purpose codes for the specific regulator
   if (templates[regulator]) {
     extractPurposeCodes(templates[regulator]);
   }
   
-  // Add "All" regulator codes
   if (templates["All"]) {
     extractPurposeCodes(templates["All"]);
   }
   
-  // Remove duplicates
   return [...new Set(codes)];
 };
-
-// Interface for duration inputs
-interface DurationInputProps {
-  value: Duration | undefined;
-  onChange: (value: Duration) => void;
-  units: string[];
-  placeholder?: string;
-  maxValue?: Duration | null;
-  error?: string;
-  targetUnit?: string;
-}
 
 const DurationInput = ({ 
   value, 
@@ -139,7 +117,6 @@ const DurationInput = ({
   targetUnit
 }: DurationInputProps) => {
   const handleNumberChange = (numValue: string) => {
-    // Store in the user-selected unit
     onChange({ number: numValue, unit: value?.unit || units[0] });
   };
 
@@ -180,7 +157,6 @@ const DurationInput = ({
   );
 };
 
-// Component for frequency input with static "times" label
 const FrequencyInput = ({ 
   value, 
   onChange, 
@@ -231,30 +207,25 @@ const FrequencyInput = ({
   );
 };
 
-// Function to get the appropriate template based on filters
 const getFilteredTemplate = (
   regulator: string, 
   purposeCode: string, 
   usecaseCategory: string
 ): ConsentTemplate | null => {
-  // Check if there's a specific template for this regulator and purpose code
   if (consentTemplates[regulator] && consentTemplates[regulator][purposeCode]) {
     const regulatorTemplate = consentTemplates[regulator][purposeCode];
     
-    // If it's an array, find the one matching the usecase category
     if (Array.isArray(regulatorTemplate)) {
       const matchingTemplate = regulatorTemplate.find(
         t => t.usecaseCategory === usecaseCategory
       );
       if (matchingTemplate) return matchingTemplate;
     } 
-    // If it's a single template and matches the usecase
     else if (regulatorTemplate.usecaseCategory === usecaseCategory) {
       return regulatorTemplate;
     }
   }
   
-  // If not found, try the "All" regulator
   if (consentTemplates["All"] && consentTemplates["All"][purposeCode]) {
     const allTemplate = consentTemplates["All"][purposeCode];
     
@@ -294,7 +265,6 @@ const ConsentParamItem = ({
   const consentTypes = watch(`consentParams.${index}.consentType`) || [];
   const fiTypes = watch(`consentParams.${index}.fiTypes`) || [];
   
-  // Validation errors state
   const [validationErrors, setValidationErrors] = useState<{
     consentValidity?: string;
     frequency?: string;
@@ -304,27 +274,26 @@ const ConsentParamItem = ({
     fiTypes?: string;
   }>({});
   
-  // Get filtered values based on current selections
   const usecaseCategories = getUsecaseCategories(regulator);
   const purposeCodes = getPurposeCodes(regulator, usecaseCategory);
   
-  // Get the template that matches current filters
   const currentTemplate = usecaseCategory && purposeCode 
     ? getFilteredTemplate(regulator, purposeCode, usecaseCategory) 
     : null;
   
-  // Extract rules from the template
   const allowedFiTypes = currentTemplate?.fiTypes || [];
   const requiredFetchType = currentTemplate?.fetchType || null;
   const allowedConsentTypes = currentTemplate?.consentType || [];
   
-  // Max values with parsed object structure
   const maxFrequency = currentTemplate?.maxFrequency ? parseFrequencyString(currentTemplate.maxFrequency) : null;
   const maxFiDataRange = currentTemplate?.maxFiDataRange ? parsePeriodString(currentTemplate.maxFiDataRange) : null;
   const maxConsentValidity = currentTemplate?.maxConsentValidity ? parsePeriodString(currentTemplate.maxConsentValidity) : null;
   const maxDataLife = currentTemplate?.maxDataLife ? parsePeriodString(currentTemplate.maxDataLife) : null;
   
-  // Set fetch type from template when purpose code changes
+  useEffect(() => {
+    setValidationErrors({});
+  }, [currentTemplate]);
+  
   useEffect(() => {
     if (currentTemplate?.fetchType) {
       setValue(`consentParams.${index}.fetchType`, 
@@ -333,18 +302,14 @@ const ConsentParamItem = ({
     }
   }, [currentTemplate, setValue, index]);
   
-  // Clear invalid consent types when allowedConsentTypes change
   useEffect(() => {
     if (allowedConsentTypes.length > 0) {
-      // Get the current consent types
       const currentConsentTypes = watch(`consentParams.${index}.consentType`) || [];
       
-      // Filter out invalid types
       const invalidTypes = currentConsentTypes.filter(
         (type: string) => !allowedConsentTypes.includes(type)
       );
       
-      // If there are invalid types, remove them and notify the user
       if (invalidTypes.length > 0) {
         const validTypes = currentConsentTypes.filter(
           (type: string) => allowedConsentTypes.includes(type)
@@ -361,98 +326,108 @@ const ConsentParamItem = ({
     }
   }, [allowedConsentTypes, index, setValue, watch, toast]);
   
-  // Validate duration fields when inputs change
+  const validateField = (field: string, value: Duration | undefined, maxValue: Duration | null) => {
+    if (!value || !maxValue) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field as keyof typeof prev];
+        return newErrors;
+      });
+      return;
+    }
+    
+    const error = validateDuration(value, maxValue);
+    
+    setValidationErrors(prev => {
+      const newErrors = { ...prev };
+      if (error) {
+        newErrors[field as keyof typeof prev] = error;
+      } else {
+        delete newErrors[field as keyof typeof prev];
+      }
+      return newErrors;
+    });
+  };
+  
   useEffect(() => {
     const consentValidity = watch(`consentParams.${index}.consentValidityPeriod`);
-    const fiDataRange = watch(`consentParams.${index}.fiDataRange`);
-    const dataLife = watch(`consentParams.${index}.dataLife`);
+    validateField('consentValidity', consentValidity, maxConsentValidity);
+  }, [watch(`consentParams.${index}.consentValidityPeriod`), maxConsentValidity]);
+  
+  useEffect(() => {
     const frequency = watch(`consentParams.${index}.dataFetchFrequency`);
-    
-    // Create a new errors object
-    const newErrors: {
-      consentValidity?: string;
-      frequency?: string;
-      fiDataRange?: string;
-      dataLife?: string;
-      consentType?: string;
-      fiTypes?: string;
-    } = {};
-    
-    // Validate consent validity
-    if (consentValidity?.number && maxConsentValidity) {
-      const error = validateDuration(consentValidity, maxConsentValidity);
-      if (error) {
-        newErrors.consentValidity = error;
-      }
+    if (fetchType === "Periodic") {
+      validateField('frequency', frequency, maxFrequency);
+    } else {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.frequency;
+        return newErrors;
+      });
     }
-    
-    // Validate frequency (only if fetch type is Periodic)
-    if (fetchType === "Periodic" && frequency?.number && maxFrequency) {
-      const error = validateDuration(frequency, maxFrequency);
-      if (error) {
-        newErrors.frequency = error;
-      }
-    }
-    
-    // Validate FI data range
-    if (fiDataRange?.number && maxFiDataRange) {
-      const error = validateDuration(fiDataRange, maxFiDataRange);
-      if (error) {
-        newErrors.fiDataRange = error;
-      }
-    }
-    
-    // Validate data life
-    if (dataLife?.number && maxDataLife) {
-      const error = validateDuration(dataLife, maxDataLife);
-      if (error) {
-        newErrors.dataLife = error;
-      }
-    }
-    
-    // Validate consent types
+  }, [watch(`consentParams.${index}.dataFetchFrequency`), maxFrequency, fetchType]);
+  
+  useEffect(() => {
+    const fiDataRange = watch(`consentParams.${index}.fiDataRange`);
+    validateField('fiDataRange', fiDataRange, maxFiDataRange);
+  }, [watch(`consentParams.${index}.fiDataRange`), maxFiDataRange]);
+  
+  useEffect(() => {
+    const dataLife = watch(`consentParams.${index}.dataLife`);
+    validateField('dataLife', dataLife, maxDataLife);
+  }, [watch(`consentParams.${index}.dataLife`), maxDataLife]);
+  
+  useEffect(() => {
     const currentConsentTypes = watch(`consentParams.${index}.consentType`) || [];
+    
     if (currentConsentTypes.length > 0 && allowedConsentTypes.length > 0) {
       const invalidTypes = currentConsentTypes.filter(
         (type: string) => !allowedConsentTypes.includes(type)
       );
       
-      if (invalidTypes.length > 0) {
-        newErrors.consentType = `Only ${allowedConsentTypes.join(', ')} are allowed for this template`;
-      }
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        if (invalidTypes.length > 0) {
+          newErrors.consentType = `Only ${allowedConsentTypes.join(', ')} are allowed for this template`;
+        } else {
+          delete newErrors.consentType;
+        }
+        return newErrors;
+      });
+    } else {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.consentType;
+        return newErrors;
+      });
     }
-    
-    // Validate FI types
+  }, [watch(`consentParams.${index}.consentType`), allowedConsentTypes]);
+  
+  useEffect(() => {
     const currentFiTypes = watch(`consentParams.${index}.fiTypes`) || [];
+    
     if (currentFiTypes.length > 0 && allowedFiTypes.length > 0) {
       const invalidTypes = currentFiTypes.filter(
         (type: string) => !allowedFiTypes.includes(type)
       );
       
-      if (invalidTypes.length > 0) {
-        newErrors.fiTypes = `Only specific FI types are allowed for this template`;
-      }
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        if (invalidTypes.length > 0) {
+          newErrors.fiTypes = `Only specific FI types are allowed for this template`;
+        } else {
+          delete newErrors.fiTypes;
+        }
+        return newErrors;
+      });
+    } else {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.fiTypes;
+        return newErrors;
+      });
     }
-    
-    // Update validation errors state
-    setValidationErrors(newErrors);
-  }, [
-    watch(`consentParams.${index}.consentValidityPeriod`),
-    watch(`consentParams.${index}.fiDataRange`),
-    watch(`consentParams.${index}.dataLife`),
-    watch(`consentParams.${index}.dataFetchFrequency`),
-    watch(`consentParams.${index}.consentType`),
-    watch(`consentParams.${index}.fiTypes`),
-    maxConsentValidity,
-    maxFiDataRange,
-    maxDataLife,
-    maxFrequency,
-    fetchType,
-    allowedConsentTypes,
-    allowedFiTypes,
-    index,
-    watch
-  ]);
+  }, [watch(`consentParams.${index}.fiTypes`), allowedFiTypes]);
   
   return (
     <div className="border rounded-md">
@@ -470,11 +445,9 @@ const ConsentParamItem = ({
                       value={field.value}
                       onValueChange={(value) => {
                         field.onChange(value);
-                        // Reset dependent fields
                         setValue(`consentParams.${index}.purposeCode`, "");
                         setValue(`consentParams.${index}.fiTypes`, []);
                         setValue(`consentParams.${index}.consentType`, []);
-                        // Clear validation errors when changing usecase
                         setValidationErrors({});
                       }}
                     >
@@ -508,10 +481,8 @@ const ConsentParamItem = ({
                       value={field.value || ""}
                       onChange={(value) => {
                         field.onChange(value);
-                        // Reset dependent fields
                         setValue(`consentParams.${index}.fiTypes`, []);
                         setValue(`consentParams.${index}.consentType`, []);
-                        // Clear validation errors when changing purpose code
                         setValidationErrors({});
                       }}
                     />
@@ -548,14 +519,7 @@ const ConsentParamItem = ({
                       value={field.value}
                       onChange={(value) => {
                         field.onChange(value);
-                        // Direct validation for consent validity
-                        if (maxConsentValidity) {
-                          const error = validateDuration(value, maxConsentValidity);
-                          setValidationErrors(prev => ({
-                            ...prev, 
-                            consentValidity: error
-                          }));
-                        }
+                        validateField('consentValidity', value, maxConsentValidity);
                       }}
                       units={["Day", "Month", "Year"]}
                       maxValue={maxConsentValidity}
@@ -602,10 +566,9 @@ const ConsentParamItem = ({
                     ) : (
                       <ToggleButtonGroup
                         options={["Onetime", "Periodic"]}
-                        value={field.value || "Onetime"}
+                        value={field.value || ""}
                         onChange={(value) => {
-                          field.onChange(value);
-                          // Clear frequency validation errors if switching from Periodic
+                          field.onChange(value || "Onetime");
                           if (value !== "Periodic") {
                             setValidationErrors(prev => {
                               const newErrors = { ...prev };
@@ -654,14 +617,17 @@ const ConsentParamItem = ({
                                   
                                   field.onChange(newValues);
                                   
-                                  // Clear consent types when changing FI types to trigger the automatic filter
-                                  if (allowedConsentTypes.length > 0) {
-                                    const currentConsentTypes = watch(`consentParams.${index}.consentType`) || [];
-                                    const validTypes = currentConsentTypes.filter(
-                                      (cType: string) => allowedConsentTypes.includes(cType)
+                                  const currentConsentTypes = watch(`consentParams.${index}.consentType`) || [];
+                                  
+                                  if (allowedConsentTypes.length > 0 && currentConsentTypes.length > 0) {
+                                    const invalidTypes = currentConsentTypes.filter(
+                                      (cType: string) => !allowedConsentTypes.includes(cType)
                                     );
                                     
-                                    if (validTypes.length !== currentConsentTypes.length) {
+                                    if (invalidTypes.length > 0) {
+                                      const validTypes = currentConsentTypes.filter(
+                                        (cType: string) => allowedConsentTypes.includes(cType)
+                                      );
                                       setValue(`consentParams.${index}.consentType`, validTypes);
                                     }
                                   }
@@ -709,22 +675,17 @@ const ConsentParamItem = ({
                         options={allowedConsentTypes.length > 0 ? allowedConsentTypes : ["Profile", "Summary", "Transactions"]}
                         value={field.value || []}
                         onChange={(value) => {
-                          // Check if the selected value is allowed
-                          const selectedValues = Array.isArray(value) ? value : [value];
-                          const filteredValues = selectedValues.filter(
-                            v => allowedConsentTypes.length === 0 || allowedConsentTypes.includes(v)
-                          );
-                          
-                          // Only update if there were no invalid selections
-                          field.onChange(filteredValues);
-                          
-                          // Validate consent types
-                          if (allowedConsentTypes.length > 0) {
-                            const invalidTypes = filteredValues.filter(
-                              (type) => !allowedConsentTypes.includes(type)
+                          const selectedValues = Array.isArray(value) ? value : [];
+                          if (allowedConsentTypes.length === 0 || 
+                              selectedValues.every(v => allowedConsentTypes.includes(v))) {
+                            field.onChange(selectedValues);
+                          } else {
+                            const validValues = selectedValues.filter(
+                              v => allowedConsentTypes.includes(v)
                             );
+                            field.onChange(validValues);
                             
-                            if (invalidTypes.length > 0) {
+                            if (validValues.length !== selectedValues.length) {
                               setValidationErrors(prev => ({
                                 ...prev,
                                 consentType: `Only ${allowedConsentTypes.join(', ')} are allowed for this template`
@@ -772,14 +733,7 @@ const ConsentParamItem = ({
                         value={field.value}
                         onChange={(value) => {
                           field.onChange(value);
-                          // Direct validation for frequency
-                          if (maxFrequency) {
-                            const error = validateDuration(value, maxFrequency);
-                            setValidationErrors(prev => ({
-                              ...prev, 
-                              frequency: error
-                            }));
-                          }
+                          validateField('frequency', value, maxFrequency);
                         }}
                         units={["Day", "Month", "Year"]}
                         maxValue={maxFrequency}
@@ -809,14 +763,7 @@ const ConsentParamItem = ({
                       value={field.value}
                       onChange={(value) => {
                         field.onChange(value);
-                        // Direct validation for fiDataRange
-                        if (maxFiDataRange) {
-                          const error = validateDuration(value, maxFiDataRange);
-                          setValidationErrors(prev => ({
-                            ...prev, 
-                            fiDataRange: error
-                          }));
-                        }
+                        validateField('fiDataRange', value, maxFiDataRange);
                       }}
                       units={["Day", "Month", "Year"]}
                       maxValue={maxFiDataRange}
@@ -847,14 +794,7 @@ const ConsentParamItem = ({
                       value={field.value}
                       onChange={(value) => {
                         field.onChange(value);
-                        // Direct validation for dataLife
-                        if (maxDataLife) {
-                          const error = validateDuration(value, maxDataLife);
-                          setValidationErrors(prev => ({
-                            ...prev, 
-                            dataLife: error
-                          }));
-                        }
+                        validateField('dataLife', value, maxDataLife);
                       }}
                       units={["Day", "Month", "Year"]}
                       maxValue={maxDataLife}

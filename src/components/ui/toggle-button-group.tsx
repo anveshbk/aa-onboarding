@@ -19,14 +19,24 @@ export const ToggleButtonGroup: React.FC<ToggleButtonGroupProps> = ({
 }) => {
   const handleClick = (option: string) => {
     if (multiple) {
-      const values = Array.isArray(value) ? value : [value].filter(Boolean);
-      if (values.includes(option)) {
-        onChange(values.filter((v) => v !== option));
+      // For multiple selection mode
+      const currentValues = Array.isArray(value) ? value : [];
+      
+      if (currentValues.includes(option)) {
+        // If already selected, remove it (deselect)
+        onChange(currentValues.filter((v) => v !== option));
       } else {
-        onChange([...values, option]);
+        // If not selected, add it
+        onChange([...currentValues, option]);
       }
     } else {
-      onChange(option);
+      // For single selection mode
+      // If clicking the already selected item, deselect it
+      if (value === option) {
+        onChange("");
+      } else {
+        onChange(option);
+      }
     }
   };
 

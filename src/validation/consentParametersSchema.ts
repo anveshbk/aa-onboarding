@@ -115,26 +115,35 @@ export const parsePeriodString = (periodStr: string): Duration | null => {
   return null;
 };
 
-// Validate duration against maximum value - fixed to handle clearing errors properly
+// Validate duration against maximum value with improved error clearing
 export const validateDuration = (
   input: Duration | undefined,
   maxValue: Duration | null
 ): string | undefined => {
   // If no input or maxValue, no validation needed
-  if (!input || !input.number || !maxValue || !maxValue.number) return undefined;
+  if (!input || !maxValue) return undefined;
   
-  // If input value is empty string, no validation needed (clearing the field)
-  if (input.number.trim() === "") return undefined;
+  // If input number is empty or not a valid number, no validation needed
+  if (!input.number || input.number.trim() === "" || isNaN(Number(input.number))) {
+    return undefined;
+  }
+  
+  // If maxValue number is empty or not a valid number, no validation needed
+  if (!maxValue.number || maxValue.number.trim() === "" || isNaN(Number(maxValue.number))) {
+    return undefined;
+  }
   
   // Convert both to days for comparison
   const inputDays = toDays(Number(input.number), input.unit);
   const maxDays = toDays(Number(maxValue.number), maxValue.unit);
   
+  // Only show error if input is greater than max
   if (inputDays > maxDays) {
     // Convert max days to the input unit for display
     const convertedMax = Math.floor(fromDays(maxDays, input.unit));
     return `Maximum allowed is ${convertedMax} ${input.unit}${convertedMax !== 1 ? 's' : ''}`;
   }
   
+  // If input is valid (less than or equal to max), return undefined to clear error
   return undefined;
 };

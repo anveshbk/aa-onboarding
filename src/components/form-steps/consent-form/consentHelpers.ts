@@ -1,4 +1,3 @@
-
 import { ConsentTemplate, ConsentTemplatesMap } from "@/validation/consentParametersSchema";
 import formFields from "@/data/formFields.json";
 
@@ -82,21 +81,37 @@ export const getFilteredTemplate = (
   regulator: string, 
   purposeCode: string, 
   usecaseCategory: string,
-  fiType?: string
+  fiType?: string,
+  fetchType?: string,
+  consentType?: string[]
 ): ConsentTemplate | null => {
   const consentTemplates = formFields.consentTemplates as ConsentTemplatesMap;
   
   const findMatchingTemplate = (templates: ConsentTemplate | ConsentTemplate[]): ConsentTemplate | null => {
     if (Array.isArray(templates)) {
+      // First try to find a template that matches all criteria
+      if (fiType && fetchType && consentType) {
+        const exactMatch = templates.find(
+          t => t.usecaseCategory === usecaseCategory && 
+               t.fiTypes?.includes(fiType) &&
+               t.fetchType === fetchType &&
+               t.consentType?.some(type => consentType.includes(type))
+        );
+        
+        if (exactMatch) return exactMatch;
+      }
+      
+      // Then try to find a template that matches FI type
       if (fiType) {
-        const fiTypeSpecificTemplate = templates.find(
+        const fiTypeMatch = templates.find(
           t => t.usecaseCategory === usecaseCategory && 
                t.fiTypes?.includes(fiType)
         );
         
-        if (fiTypeSpecificTemplate) return fiTypeSpecificTemplate;
+        if (fiTypeMatch) return fiTypeMatch;
       }
       
+      // Finally, fall back to usecase category match
       const fallbackTemplate = templates.find(
         t => t.usecaseCategory === usecaseCategory
       );
@@ -110,11 +125,13 @@ export const getFilteredTemplate = (
     return null;
   };
   
+  // First try to find a template in the regulator-specific templates
   if (consentTemplates[regulator] && consentTemplates[regulator][purposeCode]) {
     const template = findMatchingTemplate(consentTemplates[regulator][purposeCode]);
     if (template) return template;
   }
   
+  // Then try to find a template in the "All" templates
   if (consentTemplates["All"] && consentTemplates["All"][purposeCode]) {
     const template = findMatchingTemplate(consentTemplates["All"][purposeCode]);
     if (template) return template;

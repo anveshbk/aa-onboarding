@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { 
@@ -47,6 +48,17 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 const consentTemplates = formFields.consentTemplates as ConsentTemplatesMap;
+
+// Define the DurationInputProps interface that was missing
+interface DurationInputProps {
+  value: Duration | undefined;
+  onChange: (value: Duration) => void;
+  units: string[];
+  placeholder?: string;
+  maxValue: Duration | null;
+  error?: string;
+  targetUnit?: string;
+}
 
 const getUsecaseCategories = (regulator: string) => {
   const categories = new Set<string>();

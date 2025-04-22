@@ -6,9 +6,10 @@ import { format } from "date-fns";
 interface StepIndicatorProps {
   steps: string[];
   currentStep: number;
+  onStepClick?: (stepIndex: number) => void;
 }
 
-const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep }) => {
+const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep, onStepClick }) => {
   return (
     <div className="w-full py-4">
       <div className="flex flex-col space-y-2">
@@ -24,7 +25,9 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep }) => 
                       : index === currentStep
                       ? "border-primary text-primary"
                       : "border-gray-300 text-gray-500"
-                  }`}
+                  } ${onStepClick ? "cursor-pointer hover:bg-primary/5" : ""}`}
+                  onClick={() => onStepClick && onStepClick(index)}
+                  title={`Go to ${step}`}
                 >
                   {index < currentStep ? (
                     <Check className="h-4 w-4" />
@@ -32,7 +35,11 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep }) => 
                     <span>{index + 1}</span>
                   )}
                 </div>
-                <span className="text-xs mt-2 text-center max-w-[100px] truncate" title={step}>
+                <span 
+                  className={`text-xs mt-2 text-center max-w-[100px] truncate ${onStepClick ? "cursor-pointer hover:text-primary" : ""}`} 
+                  title={step}
+                  onClick={() => onStepClick && onStepClick(index)}
+                >
                   {step}
                 </span>
               </div>

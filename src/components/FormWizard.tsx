@@ -126,6 +126,16 @@ const FormWizard = () => {
     }
   };
 
+  const handleStepClick = async (stepIndex: number) => {
+    // Save current form data before navigation
+    const currentData = methods.getValues();
+    setFormData({ ...formData, ...currentData });
+    
+    // Navigate to the selected step
+    setCurrentStep(stepIndex);
+    window.scrollTo(0, 0);
+  };
+
   const handleSubmit = () => {
     const completeFormData = { ...formData, ...methods.getValues() };
     console.log("Form Submitted:", completeFormData);
@@ -154,6 +164,7 @@ const FormWizard = () => {
           <StepIndicator 
             steps={steps.map(step => step.title)} 
             currentStep={currentStep}
+            onStepClick={handleStepClick}
           />
         </div>
       </Card>

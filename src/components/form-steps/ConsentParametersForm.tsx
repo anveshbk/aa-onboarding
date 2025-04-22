@@ -43,7 +43,9 @@ import {
   Duration,
   validateDuration,
   parseFrequencyString,
-  parsePeriodString
+  parsePeriodString,
+  durationToString,
+  convertDuration
 } from "@/validation/consentParametersSchema";
 import { useToast } from "@/hooks/use-toast";
 
@@ -58,6 +60,7 @@ interface DurationInputProps {
   maxValue: Duration | null;
   error?: string;
   targetUnit?: string;
+  required?: boolean;
 }
 
 const getUsecaseCategories = (regulator: string) => {
@@ -126,7 +129,8 @@ const DurationInput = ({
   placeholder,
   maxValue,
   error,
-  targetUnit
+  targetUnit,
+  required = false
 }: DurationInputProps) => {
   const handleNumberChange = (numValue: string) => {
     onChange({ number: numValue, unit: value?.unit || units[0] });
@@ -142,6 +146,7 @@ const DurationInput = ({
           onChange={(e) => handleNumberChange(e.target.value)}
           placeholder={placeholder || "Enter number"}
           className="w-24"
+          required={required}
         />
         <Select
           value={value?.unit || units[0]}
@@ -174,8 +179,9 @@ const FrequencyInput = ({
   onChange, 
   units,
   maxValue,
-  error
-}: Omit<DurationInputProps, 'placeholder'>) => {
+  error,
+  required = false
+}: Omit<DurationInputProps, 'placeholder' | 'targetUnit'>) => {
   return (
     <div className="space-y-2">
       <div className="flex gap-2 items-center">
@@ -188,6 +194,7 @@ const FrequencyInput = ({
             unit: value?.unit || units[0] 
           })}
           className="w-24"
+          required={required}
         />
         <span className="text-sm font-medium">times</span>
         <Select
@@ -222,34 +229,47 @@ const FrequencyInput = ({
 const getFilteredTemplate = (
   regulator: string, 
   purposeCode: string, 
-  usecaseCategory: string
+  usecaseCategory: string,
+  fiType?: string
 ): ConsentTemplate | null => {
-  if (consentTemplates[regulator] && consentTemplates[regulator][purposeCode]) {
-    const regulatorTemplate = consentTemplates[regulator][purposeCode];
-    
-    if (Array.isArray(regulatorTemplate)) {
-      const matchingTemplate = regulatorTemplate.find(
+  // Try to find a template specific to the FI type first
+  const findMatchingTemplate = (templates: ConsentTemplate | ConsentTemplate[]): ConsentTemplate | null => {
+    if (Array.isArray(templates)) {
+      // If fiType is provided, first look for a template specific to that FI type
+      if (fiType) {
+        const fiTypeSpecificTemplate = templates.find(
+          t => t.usecaseCategory === usecaseCategory && 
+               t.fiTypes?.includes(fiType)
+        );
+        
+        if (fiTypeSpecificTemplate) return fiTypeSpecificTemplate;
+      }
+      
+      // If no FI type specific template was found or no FI type was provided,
+      // return the first template matching the usecase category
+      const fallbackTemplate = templates.find(
         t => t.usecaseCategory === usecaseCategory
       );
-      if (matchingTemplate) return matchingTemplate;
+      
+      return fallbackTemplate || null;
     } 
-    else if (regulatorTemplate.usecaseCategory === usecaseCategory) {
-      return regulatorTemplate;
+    else if (templates.usecaseCategory === usecaseCategory) {
+      return templates;
     }
+    
+    return null;
+  };
+  
+  // First check regulator-specific templates
+  if (consentTemplates[regulator] && consentTemplates[regulator][purposeCode]) {
+    const template = findMatchingTemplate(consentTemplates[regulator][purposeCode]);
+    if (template) return template;
   }
   
+  // If not found, check "All" templates
   if (consentTemplates["All"] && consentTemplates["All"][purposeCode]) {
-    const allTemplate = consentTemplates["All"][purposeCode];
-    
-    if (Array.isArray(allTemplate)) {
-      const matchingTemplate = allTemplate.find(
-        t => t.usecaseCategory === usecaseCategory
-      );
-      if (matchingTemplate) return matchingTemplate;
-    } 
-    else if (allTemplate.usecaseCategory === usecaseCategory) {
-      return allTemplate;
-    }
+    const template = findMatchingTemplate(consentTemplates["All"][purposeCode]);
+    if (template) return template;
   }
   
   return null;
@@ -289,8 +309,10 @@ const ConsentParamItem = ({
   const usecaseCategories = getUsecaseCategories(regulator);
   const purposeCodes = getPurposeCodes(regulator, usecaseCategory);
   
+  // Get the current template based on the selected FI type (if any)
+  const selectedFiType = fiTypes.length > 0 ? fiTypes[0] : undefined;
   const currentTemplate = usecaseCategory && purposeCode 
-    ? getFilteredTemplate(regulator, purposeCode, usecaseCategory) 
+    ? getFilteredTemplate(regulator, purposeCode, usecaseCategory, selectedFiType) 
     : null;
   
   const allowedFiTypes = currentTemplate?.fiTypes || [];
@@ -302,9 +324,48 @@ const ConsentParamItem = ({
   const maxConsentValidity = currentTemplate?.maxConsentValidity ? parsePeriodString(currentTemplate.maxConsentValidity) : null;
   const maxDataLife = currentTemplate?.maxDataLife ? parsePeriodString(currentTemplate.maxDataLife) : null;
   
+  // Get whether fields are required from JSON (if available)
+  const isFieldRequired = (fieldName: string): boolean => {
+    return formFields.requiredFields?.[fieldName] === true;
+  };
+  
   useEffect(() => {
     setValidationErrors({});
   }, [currentTemplate]);
+  
+  // Update template values when FI type changes
+  useEffect(() => {
+    if (usecaseCategory && purposeCode && fiTypes.length > 0) {
+      const newTemplate = getFilteredTemplate(regulator, purposeCode, usecaseCategory, fiTypes[0]);
+      
+      // Reset validation errors
+      setValidationErrors({});
+      
+      // Update fetch type if required
+      if (newTemplate?.fetchType) {
+        setValue(`consentParams.${index}.fetchType`, 
+          newTemplate.fetchType === "ONE-TIME" ? "Onetime" : "Periodic"
+        );
+      }
+      
+      // Convert and update duration fields based on template units
+      const updateDurationField = (fieldName: string, maxValue: Duration | null) => {
+        if (!maxValue) return;
+        
+        const currentValue = watch(`consentParams.${index}.${fieldName}`);
+        if (currentValue && currentValue.number && maxValue.unit && currentValue.unit !== maxValue.unit) {
+          // Convert to template unit
+          const convertedValue = convertDuration(currentValue, maxValue.unit);
+          setValue(`consentParams.${index}.${fieldName}`, convertedValue);
+        }
+      };
+      
+      updateDurationField('consentValidityPeriod', maxConsentValidity);
+      updateDurationField('dataFetchFrequency', maxFrequency);
+      updateDurationField('fiDataRange', maxFiDataRange);
+      updateDurationField('dataLife', maxDataLife);
+    }
+  }, [fiTypes, usecaseCategory, purposeCode, regulator, setValue, index, watch]);
   
   useEffect(() => {
     if (currentTemplate?.fetchType) {
@@ -512,7 +573,7 @@ const ConsentParamItem = ({
                 name={`consentParams.${index}.purposeText`}
                 render={({ field }) => (
                   <FormControl>
-                    <Input {...field} placeholder="Enter purpose text" />
+                    <Input {...field} placeholder="Enter purpose text" required={isFieldRequired('purposeText')} />
                   </FormControl>
                 )}
               />
@@ -537,14 +598,17 @@ const ConsentParamItem = ({
                       maxValue={maxConsentValidity}
                       error={validationErrors.consentValidity}
                       targetUnit={maxConsentValidity?.unit}
+                      required={isFieldRequired('consentValidityPeriod')}
                     />
                   </FormControl>
                 )}
               />
               {maxConsentValidity && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  Maximum allowed: {maxConsentValidity.number} {maxConsentValidity.unit}
-                  {Number(maxConsentValidity.number) !== 1 ? 's' : ''}
+                  {maxConsentValidity.unit === "tenure"
+                    ? "Coterminous with loan tenure"
+                    : `Maximum allowed: ${maxConsentValidity.number} ${maxConsentValidity.unit}${Number(maxConsentValidity.number) !== 1 ? 's' : ''}`
+                  }
                 </p>
               )}
             </td>
@@ -750,6 +814,7 @@ const ConsentParamItem = ({
                         units={["Day", "Month", "Year"]}
                         maxValue={maxFrequency}
                         error={validationErrors.frequency}
+                        required={isFieldRequired('dataFetchFrequency')}
                       />
                     </FormControl>
                   )}
@@ -781,6 +846,7 @@ const ConsentParamItem = ({
                       maxValue={maxFiDataRange}
                       error={validationErrors.fiDataRange}
                       targetUnit={maxFiDataRange?.unit}
+                      required={isFieldRequired('fiDataRange')}
                     />
                   </FormControl>
                 )}
@@ -812,14 +878,17 @@ const ConsentParamItem = ({
                       maxValue={maxDataLife}
                       error={validationErrors.dataLife}
                       targetUnit={maxDataLife?.unit}
+                      required={isFieldRequired('dataLife')}
                     />
                   </FormControl>
                 )}
               />
               {maxDataLife && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  Maximum allowed: {maxDataLife.number} {maxDataLife.unit}
-                  {Number(maxDataLife.number) !== 1 ? 's' : ''}
+                  {maxDataLife.unit === "tenure"
+                    ? "Coterminous with loan tenure"
+                    : `Maximum allowed: ${maxDataLife.number} ${maxDataLife.unit}${Number(maxDataLife.number) !== 1 ? 's' : ''}`
+                  }
                 </p>
               )}
             </td>

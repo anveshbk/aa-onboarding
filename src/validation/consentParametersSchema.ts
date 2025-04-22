@@ -115,6 +115,35 @@ export const parsePeriodString = (periodStr: string): Duration | null => {
   return null;
 };
 
+// Convert a duration to a readable string
+export const durationToString = (duration: Duration | null): string => {
+  if (!duration) return "";
+  
+  if (duration.unit === "tenure") {
+    return "Coterminous with loan tenure";
+  }
+  
+  return `${duration.number} ${duration.unit}${Number(duration.number) !== 1 ? 's' : ''}`;
+};
+
+// Convert a duration to another unit
+export const convertDuration = (duration: Duration, targetUnit: string): Duration => {
+  if (!duration.number || isNaN(Number(duration.number))) {
+    return { number: "", unit: targetUnit };
+  }
+  
+  // Convert to days first
+  const valueInDays = toDays(Number(duration.number), duration.unit);
+  
+  // Then convert to target unit
+  const convertedValue = fromDays(valueInDays, targetUnit);
+  
+  return {
+    number: String(Math.floor(convertedValue)),
+    unit: targetUnit
+  };
+};
+
 // Validate duration against maximum value with improved error clearing
 export const validateDuration = (
   input: Duration | undefined,
@@ -122,6 +151,11 @@ export const validateDuration = (
 ): string | undefined => {
   // If no input or maxValue, no validation needed
   if (!input || !maxValue) return undefined;
+  
+  // Special case for coterminous
+  if (maxValue.unit === "tenure") {
+    return undefined; // Always valid
+  }
   
   // If input number is empty or not a valid number, no validation needed
   if (!input.number || input.number.trim() === "" || isNaN(Number(input.number))) {

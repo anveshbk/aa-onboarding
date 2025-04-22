@@ -31,9 +31,10 @@ export const ToggleButtonGroup: React.FC<ToggleButtonGroupProps> = ({
       }
     } else {
       // For single selection mode
-      // If clicking the already selected item, don't deselect it
-      // This ensures we always have a selected value once chosen
-      if (value !== option) {
+      // Toggle selection - if clicking the already selected item, deselect it
+      if (value === option) {
+        onChange("");
+      } else {
         onChange(option);
       }
     }

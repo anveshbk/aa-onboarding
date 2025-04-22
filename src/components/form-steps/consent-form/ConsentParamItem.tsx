@@ -334,37 +334,29 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
                 name={`consentParams.${index}.consentValidityPeriod`}
                 render={({ field }) => (
                   <FormControl>
-                    {isCoterminous ? (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Coterminous with loan tenure</p>
-                        <input type="hidden" value={JSON.stringify({number: "999", unit: "tenure"})} />
-                      </div>
-                    ) : (
-                      <DurationInput
-                        value={field.value}
-                        onChange={(value) => {
-                          field.onChange(value);
-                          validateField('consentValidity', value, maxConsentValidity);
-                        }}
-                        units={["Day", "Month", "Year"]}
-                        maxValue={maxConsentValidity}
-                        error={validationErrors.consentValidity}
-                        required={isFieldRequired('consentValidityPeriod')}
-                      />
-                    )}
+                    <DurationInput
+                      value={field.value}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        validateField('consentValidity', value, maxConsentValidity);
+                      }}
+                      units={["Day", "Month", "Year"]}
+                      maxValue={maxConsentValidity}
+                      error={validationErrors.consentValidity}
+                      required={isFieldRequired('consentValidityPeriod')}
+                    />
                   </FormControl>
                 )}
               />
-              {maxConsentValidity && !isCoterminous && (
+              {isCoterminous ? (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Coterminous with loan tenure
+                </p>
+              ) : maxConsentValidity ? (
                 <p className="text-sm text-muted-foreground mt-1">
                   Maximum allowed: {maxConsentValidity.number} {maxConsentValidity.unit}
                 </p>
-              )}
-              {isCoterminous && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {formatMaxValidity(currentTemplate?.maxConsentValidity)}
-                </p>
-              )}
+              ) : null}
             </td>
           </tr>
           

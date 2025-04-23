@@ -65,22 +65,6 @@ export const fromDays = (days: number, targetUnit: string): number => {
   }
 };
 
-export const parseFrequencyString = (frequencyStr: string): Duration | null => {
-  if (!frequencyStr || frequencyStr === "NA") return null;
-
-  const regex = /([\d.]+)\s+times?\s+per\s+(\w+)/i;
-  const match = frequencyStr.match(regex);
-
-  if (match) {
-    return {
-      number: match[1],
-      unit: match[2].charAt(0).toUpperCase() + match[2].slice(1).toLowerCase()
-    };
-  }
-
-  return null;
-};
-
 export const parsePeriodString = (periodStr: string): Duration | null => {
   if (!periodStr || periodStr === "NA") return null;
 
@@ -158,21 +142,25 @@ export const validateFrequencyAgainstTemplate = (
 ): string | undefined => {
   if (!userInput || !userInput.number || !userInput.unit || !templateMaxFrequency) return undefined;
 
-  const parsedTemplate = parseFrequencyString(templateMaxFrequency);
-  if (!parsedTemplate || !parsedTemplate.number || !parsedTemplate.unit) return undefined;
+  const maxDuration = parsePeriodString(templateMaxFrequency);
+  if (!maxDuration || !maxDuration.number || !maxDuration.unit) return undefined;
 
-  const userUnit = userInput.unit.toLowerCase();
-  const templateUnit = parsedTemplate.unit.toLowerCase();
+  const inputDays = toDays(Number(userInput.number), userInput.unit);
+  const maxDays = toDays(Number(maxDuration.number), maxDuration.unit);
 
-  const userFrequencyPerDay = 1 / toDays(Number(userInput.number), userUnit);
-  const userFrequencyInTemplateUnit = userFrequencyPerDay * toDays(1, templateUnit);
+  if (inputDays < maxDays) return undefined;
 
-  const maxAllowed = Number(parsedTemplate.number);
+  const allowedTimesPerInputUnit = Math.floor(toDays(1, userInput.unit) / maxDays);
+  return `Maximum allowed is ${allowedTimesPerInputUnit} times per ${userInput.unit.toLowerCase()}`;
+};
 
-  if (userFrequencyInTemplateUnit > maxAllowed) {
-    const maxTimesPerUserUnit = maxAllowed / (toDays(1, templateUnit) / toDays(Number(userInput.number), userUnit));
-    return `Maximum allowed is ${maxTimesPerUserUnit.toFixed(2)} times per ${userUnit}`;
-  }
+// Optional helper to format the frequency as displayable string
+export const formatFrequencyForDisplay = (duration: Duration): string => {
+  if (!duration?.number || !duration?.unit) return "";
 
-  return undefined;
+  const days = toDays(Number(duration.number), duration.unit);
+  if (days === 0) return "";
+
+  const frequencyPerMonth = Math.floor(30 / days);
+  return `${frequencyPerMonth} times per ${duration.unit.toLowerCase()}`;
 };

@@ -29,7 +29,7 @@ const FrequencyInput: React.FC<FrequencyInputProps> = ({
           className="w-24"
           required={required}
         />
-        <span className="text-sm font-medium">times</span>
+        <span className="text-sm font-medium">times per</span>
         <Select
           value={value?.unit || units[0]}
           onValueChange={(unit) => onChange({ 

@@ -19,7 +19,8 @@ import {
   getMaxValues,
   isFieldRequired,
   isValidDuration,
-  formatDuration
+  formatDuration,
+  validateFrequency
 } from "./consentHelpers";
 
 interface ConsentParamItemProps {
@@ -131,7 +132,7 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
   
   useEffect(() => {
     if (fetchType === "Periodic" && dataFetchFrequency && maxFrequency) {
-      const validation = isValidDuration(dataFetchFrequency, maxFrequency);
+      const validation = validateFrequency(dataFetchFrequency, maxFrequency);
       setValidationErrors(prev => ({
         ...prev,
         dataFetchFrequency: validation.isValid ? undefined : validation.message

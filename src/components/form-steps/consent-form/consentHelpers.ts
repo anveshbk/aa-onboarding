@@ -1,5 +1,4 @@
-
-import { ConsentTemplate, ConsentTemplatesMap, Duration } from "@/validation/consentParametersSchema";
+import { ConsentTemplate, ConsentTemplatesMap, Duration, parseFrequencyString, parsePeriodString, toDays } from "@/validation/consentParametersSchema";
 import formFields from "@/data/formFields.json";
 
 // Define proper types for the template structures
@@ -281,25 +280,11 @@ export const parseDuration = (durationStr: string | undefined): Duration | null 
   return null;
 };
 
-// Parse frequency strings like "31 times per month"
+// Parse frequency strings - now expecting either "X times per unit" or standard "X Unit" format
 export const parseFrequency = (frequencyStr: string | undefined): Duration | null => {
   if (!frequencyStr || frequencyStr === "NA") return null;
   
-  const regex = /(\d+)\s+times?\s+per\s+(\w+)/i;
-  const match = frequencyStr.match(regex);
-  
-  if (match) {
-    let unit = match[2].toLowerCase();
-    // Capitalize first letter
-    unit = unit.charAt(0).toUpperCase() + unit.slice(1);
-    
-    return {
-      number: match[1],
-      unit: unit
-    };
-  }
-  
-  return null;
+  return parseFrequencyString(frequencyStr);
 };
 
 // Convert between different duration units
@@ -362,6 +347,36 @@ export const isValidDuration = (
     return {
       isValid: false,
       message: `Maximum allowed is ${maxInInputUnit} ${input.unit}${maxInInputUnit !== 1 ? 's' : ''}`
+    };
+  }
+  
+  return { isValid: true };
+};
+
+// NEW: Validate frequency against maximum
+export const validateFrequency = (
+  input: Duration | undefined,
+  maxFreq: Duration | null
+): { isValid: boolean; message?: string } => {
+  // If no maxFreq or input is undefined, consider it valid
+  if (!maxFreq || !input || !input.number || input.number.trim() === "") {
+    return { isValid: true };
+  }
+  
+  const inputValue = Number(input.number);
+  if (isNaN(inputValue) || inputValue <= 0) {
+    return { isValid: false, message: "Please enter a valid positive number" };
+  }
+  
+  // Convert both to "times per day" for comparison
+  const inputPerDay = inputValue / toDays(1, input.unit);
+  const maxPerDay = Number(maxFreq.number) / toDays(1, maxFreq.unit);
+  
+  if (inputPerDay > maxPerDay) {
+    // Format message in user-friendly "times per" format
+    return {
+      isValid: false,
+      message: `Maximum allowed frequency is ${maxFreq.number} times per ${maxFreq.unit.toLowerCase()}`
     };
   }
   

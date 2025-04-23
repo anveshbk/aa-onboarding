@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 
 // ------------------ SCHEMAS ------------------
@@ -73,21 +74,23 @@ export const fromDays = (days: number, targetUnit: string): number => {
   }
 };
 
-// Parse frequency strings like "31 times per month"
+// Parse frequency strings like "31 times per month" or "31 Month"
 export const parseFrequencyString = (frequencyStr: string): Duration | null => {
   if (!frequencyStr || frequencyStr === "NA") return null;
 
-  const regex = /(\d+)\s+times?\s+per\s+(\w+)/i;
-  const match = frequencyStr.match(regex);
+  // First try to parse "X times per unit" format
+  const regexTimesPerUnit = /(\d+)\s+times?\s+per\s+(\w+)/i;
+  const matchTimesPerUnit = frequencyStr.match(regexTimesPerUnit);
 
-  if (match) {
+  if (matchTimesPerUnit) {
     return {
-      number: match[1],
-      unit: match[2].charAt(0).toUpperCase() + match[2].slice(1).toLowerCase()
+      number: matchTimesPerUnit[1],
+      unit: matchTimesPerUnit[2].charAt(0).toUpperCase() + matchTimesPerUnit[2].slice(1).toLowerCase()
     };
   }
 
-  return null;
+  // Then try standard duration format "X Unit"
+  return parsePeriodString(frequencyStr);
 };
 
 // Parse period strings like "6 Months", "20 years", "coterminous"
@@ -167,7 +170,7 @@ export const validateDuration = (
   return undefined;
 };
 
-// ✅ NEW: Frequency validation ("X times per unit")
+// Frequency validation (now expects maxFreq in "X Unit" format but displays "X times per unit" in error messages)
 export const validateFrequency = (
   input: Duration | undefined,
   max: Duration | null
@@ -176,12 +179,15 @@ export const validateFrequency = (
   if (!input.number || !max.number) return undefined;
   if (isNaN(Number(input.number)) || isNaN(Number(max.number))) return undefined;
 
+  // Convert both to "times per day" for comparison
   const inputPerDay = Number(input.number) / toDays(1, input.unit);
   const maxPerDay = Number(max.number) / toDays(1, max.unit);
 
   if (inputPerDay > maxPerDay) {
+    // Format the error message to be user-friendly
     return `Maximum allowed frequency is ${max.number} times per ${max.unit.toLowerCase()}`;
   }
 
   return undefined;
 };
+

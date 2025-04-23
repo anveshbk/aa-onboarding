@@ -15,6 +15,11 @@ interface TemplateData {
   consentType?: string[];
 }
 
+// Helper function to safely check if an object has usecaseCategory property
+const hasUsecaseCategory = (obj: any): obj is { usecaseCategory: string } => {
+  return obj && typeof obj === 'object' && 'usecaseCategory' in obj;
+};
+
 // Get all usecase categories based on regulator
 export const getUsecaseCategories = (regulator: string) => {
   if (!regulator) return [];
@@ -27,12 +32,12 @@ export const getUsecaseCategories = (regulator: string) => {
     Object.values(consentTemplates[regulator]).forEach(template => {
       if (Array.isArray(template)) {
         template.forEach(t => {
-          if (t && typeof t === 'object' && 'usecaseCategory' in t) {
-            if (t.usecaseCategory) categories.add(t.usecaseCategory);
+          if (hasUsecaseCategory(t) && t.usecaseCategory) {
+            categories.add(t.usecaseCategory);
           }
         });
-      } else if (template && typeof template === 'object' && 'usecaseCategory' in template) {
-        if (template.usecaseCategory) categories.add(template.usecaseCategory);
+      } else if (hasUsecaseCategory(template) && template.usecaseCategory) {
+        categories.add(template.usecaseCategory);
       }
     });
   }
@@ -42,12 +47,12 @@ export const getUsecaseCategories = (regulator: string) => {
     Object.values(consentTemplates["All"]).forEach(template => {
       if (Array.isArray(template)) {
         template.forEach(t => {
-          if (t && typeof t === 'object' && 'usecaseCategory' in t) {
-            if (t.usecaseCategory) categories.add(t.usecaseCategory);
+          if (hasUsecaseCategory(t) && t.usecaseCategory) {
+            categories.add(t.usecaseCategory);
           }
         });
-      } else if (template && typeof template === 'object' && 'usecaseCategory' in template) {
-        if (template.usecaseCategory) categories.add(template.usecaseCategory);
+      } else if (hasUsecaseCategory(template) && template.usecaseCategory) {
+        categories.add(template.usecaseCategory);
       }
     });
   }
@@ -65,10 +70,10 @@ export const getPurposeCodes = (regulator: string, usecaseCategory: string) => {
   const checkTemplates = (templates: any) => {
     Object.entries(templates).forEach(([code, template]) => {
       if (Array.isArray(template)) {
-        if (template.some(t => t.usecaseCategory === usecaseCategory)) {
+        if (template.some(t => hasUsecaseCategory(t) && t.usecaseCategory === usecaseCategory)) {
           purposeCodes.add(code);
         }
-      } else if (template.usecaseCategory === usecaseCategory) {
+      } else if (hasUsecaseCategory(template) && template.usecaseCategory === usecaseCategory) {
         purposeCodes.add(code);
       }
     });
@@ -104,12 +109,12 @@ export const findMatchingTemplates = (
     const template = templates[purposeCode];
     if (Array.isArray(template)) {
       template.forEach(t => {
-        if (t.usecaseCategory === usecaseCategory) {
-          matchingTemplates.push(t);
+        if (hasUsecaseCategory(t) && t.usecaseCategory === usecaseCategory) {
+          matchingTemplates.push(t as ConsentTemplate);
         }
       });
-    } else if (template.usecaseCategory === usecaseCategory) {
-      matchingTemplates.push(template);
+    } else if (hasUsecaseCategory(template) && template.usecaseCategory === usecaseCategory) {
+      matchingTemplates.push(template as ConsentTemplate);
     }
   };
   

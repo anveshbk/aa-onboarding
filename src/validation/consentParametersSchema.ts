@@ -68,22 +68,13 @@ export const fromDays = (days: number, targetUnit: string): number => {
 export const parseFrequencyString = (frequencyStr: string): Duration | null => {
   if (!frequencyStr || frequencyStr === "NA") return null;
 
-  const regex = /(?:(\d+)\s+times?\s+per\s+(\w+))|(?:(\d+)\s*(\w+))/i;
+  const regex = /([\d.]+)\s+times?\s+per\s+(\w+)/i;
   const match = frequencyStr.match(regex);
 
   if (match) {
-    const number = match[1] || match[3];
-    let unit = match[2] || match[4];
-
-    if (!number || !unit) return null;
-
-    unit = unit.toLowerCase();
-    if (unit.endsWith('s')) unit = unit.slice(0, -1);
-    unit = unit.charAt(0).toUpperCase() + unit.slice(1);
-
     return {
-      number,
-      unit
+      number: match[1],
+      unit: match[2].charAt(0).toUpperCase() + match[2].slice(1).toLowerCase()
     };
   }
 
@@ -100,7 +91,7 @@ export const parsePeriodString = (periodStr: string): Duration | null => {
     };
   }
 
-  const regex = /(\d+)\s+(\w+)/i;
+  const regex = /([\d.]+)\s+(\w+)/i;
   const match = periodStr.match(regex);
 
   if (match) {
@@ -146,9 +137,7 @@ export const validateDuration = (
   maxValue: Duration | null
 ): string | undefined => {
   if (!input || !maxValue) return undefined;
-
   if (maxValue.unit === "tenure") return undefined;
-
   if (!input.number || input.number.trim() === "" || isNaN(Number(input.number))) return undefined;
   if (!maxValue.number || maxValue.number.trim() === "" || isNaN(Number(maxValue.number))) return undefined;
 
@@ -163,24 +152,23 @@ export const validateDuration = (
   return undefined;
 };
 
-export const validateFrequency = (
-  input: Duration | undefined,
-  maxFrequencyStr: string | undefined
+export const validateFrequencyAgainstTemplate = (
+  userInput: Duration | undefined,
+  templateMaxFrequency: string | undefined
 ): string | undefined => {
-  if (!input || !input.number || !input.unit || !maxFrequencyStr) return undefined;
+  if (!userInput || !userInput.number || !templateMaxFrequency) return undefined;
 
-  const inputNumber = Number(input.number);
-  if (isNaN(inputNumber)) return undefined;
+  const parsedTemplate = parseFrequencyString(templateMaxFrequency);
+  if (!parsedTemplate) return undefined;
 
-  const maxFrequency = parseFrequencyString(maxFrequencyStr);
-  if (!maxFrequency || !maxFrequency.number || !maxFrequency.unit) return undefined;
+  const inputTimesPerInputUnit = 1; // 1 fetch per input duration
+  const totalFetchesPerMonth = inputTimesPerInputUnit * toDays(Number(userInput.number), userInput.unit) / 1;
 
-  const userFrequencyPerMonth = (30 / toDays(1, input.unit)) * inputNumber;
-  const maxAllowedPerMonth = (30 / toDays(1, maxFrequency.unit)) * Number(maxFrequency.number);
+  const allowedFetchesPerMonth = Number(parsedTemplate.number) * (30 / toDays(1, parsedTemplate.unit));
 
-  if (userFrequencyPerMonth > maxAllowedPerMonth) {
-    const convertedMax = Math.floor((toDays(Number(maxFrequency.number), maxFrequency.unit)) / 30);
-    return `Maximum allowed is ${maxFrequency.number} times per ${maxFrequency.unit}`;
+  if (totalFetchesPerMonth > allowedFetchesPerMonth) {
+    const maxTimesPerInputUnit = allowedFetchesPerMonth / (toDays(Number(userInput.number), userInput.unit) / 1);
+    return `Maximum allowed is ${maxTimesPerInputUnit.toFixed(2)} times per ${userInput.unit.toLowerCase()}`;
   }
 
   return undefined;

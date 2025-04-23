@@ -625,7 +625,7 @@
           "purposeText": "To monitor the counterparty risks of Recovery Agents / Sourcing Partners.",
           "fiTypes": ["DEPOSIT", "GSTR1_3B"],
           "fetchType": "PERIODIC",
-          "consentType": ["Profile", "Summary", "Transaction"],
+          "consentType": ["Profile", "Summary", "Transactions"],
           "maxFrequency": "1 per month",
           "maxFiDataRange": "6 months",
           "maxConsentValidity": "1 year",

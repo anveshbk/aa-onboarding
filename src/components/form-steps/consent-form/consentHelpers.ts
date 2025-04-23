@@ -1,5 +1,5 @@
 
-import { ConsentTemplate, ConsentTemplatesMap } from "@/validation/consentParametersSchema";
+import { ConsentTemplate, ConsentTemplatesMap, Duration } from "@/validation/consentParametersSchema";
 import formFields from "@/data/formFields.json";
 
 // Define proper types for the template structures
@@ -15,6 +15,7 @@ interface TemplateData {
   consentType?: string[];
 }
 
+// Get all usecase categories based on regulator
 export const getUsecaseCategories = (regulator: string) => {
   const categories = new Set<string>();
   
@@ -32,6 +33,7 @@ export const getUsecaseCategories = (regulator: string) => {
     });
   }
   
+  // Also consider templates marked for "All" regulators
   if (formFields.consentTemplates["All"]) {
     Object.values(formFields.consentTemplates["All"]).forEach(template => {
       if (Array.isArray(template)) {
@@ -46,9 +48,10 @@ export const getUsecaseCategories = (regulator: string) => {
     });
   }
   
-  return Array.from(categories);
+  return Array.from(categories).sort();
 };
 
+// Get purpose codes based on regulator and usecase category
 export const getPurposeCodes = (regulator: string, usecaseCategory: string) => {
   if (!regulator || !usecaseCategory) return [];
   
@@ -67,41 +70,60 @@ export const getPurposeCodes = (regulator: string, usecaseCategory: string) => {
     });
   };
   
+  // Check regulator-specific templates
   if (templates[regulator]) {
     extractPurposeCodes(templates[regulator]);
   }
   
+  // Also check templates for "All" regulators
   if (templates["All"]) {
     extractPurposeCodes(templates["All"]);
   }
   
-  return [...new Set(codes)];
+  return [...new Set(codes)].sort();
 };
 
+// Find the best matching template based on multiple criteria
 export const getFilteredTemplate = (
   regulator: string, 
   purposeCode: string, 
   usecaseCategory: string,
-  fiType?: string
+  selectedFiTypes: string[] = [],
+  selectedConsentTypes: string[] = []
 ): ConsentTemplate | null => {
   const consentTemplates = formFields.consentTemplates as ConsentTemplatesMap;
   
   const findMatchingTemplate = (templates: ConsentTemplate | ConsentTemplate[]): ConsentTemplate | null => {
     if (Array.isArray(templates)) {
-      if (fiType) {
-        const fiTypeSpecificTemplate = templates.find(
-          t => t.usecaseCategory === usecaseCategory && 
-               t.fiTypes?.includes(fiType)
-        );
-        
-        if (fiTypeSpecificTemplate) return fiTypeSpecificTemplate;
+      // Try to find a template that matches all criteria including FI types and consent types
+      if (selectedFiTypes.length > 0) {
+        const fiTypeMatches = templates.filter(t => {
+          if (t.usecaseCategory !== usecaseCategory) return false;
+          if (!t.fiTypes) return false;
+          
+          // Check if any selected FI type is in the template's allowed FI types
+          return selectedFiTypes.some(selectedType => t.fiTypes?.includes(selectedType));
+        });
+
+        if (fiTypeMatches.length > 0) {
+          // If we have FI type matches, try to further filter by consent types if possible
+          if (selectedConsentTypes.length > 0) {
+            const consentTypeMatches = fiTypeMatches.filter(t => {
+              if (!t.consentType) return false;
+              return selectedConsentTypes.some(selectedType => t.consentType?.includes(selectedType));
+            });
+            
+            if (consentTypeMatches.length > 0) {
+              return consentTypeMatches[0]; // Return the first matching template
+            }
+          }
+          
+          return fiTypeMatches[0]; // Return the first FI type matching template
+        }
       }
       
-      const fallbackTemplate = templates.find(
-        t => t.usecaseCategory === usecaseCategory
-      );
-      
-      return fallbackTemplate || null;
+      // If no specific matches, return the first template for this usecase category
+      return templates.find(t => t.usecaseCategory === usecaseCategory) || null;
     } 
     else if (templates.usecaseCategory === usecaseCategory) {
       return templates;
@@ -110,17 +132,57 @@ export const getFilteredTemplate = (
     return null;
   };
   
+  // First check regulator-specific templates
   if (consentTemplates[regulator] && consentTemplates[regulator][purposeCode]) {
     const template = findMatchingTemplate(consentTemplates[regulator][purposeCode]);
     if (template) return template;
   }
   
+  // Then check templates for "All" regulators
   if (consentTemplates["All"] && consentTemplates["All"][purposeCode]) {
     const template = findMatchingTemplate(consentTemplates["All"][purposeCode]);
     if (template) return template;
   }
   
   return null;
+};
+
+// Get allowed FI types based on selected regulator, purpose code, and usecase category
+export const getAllowedFiTypes = (
+  regulator: string,
+  purposeCode: string,
+  usecaseCategory: string
+): string[] => {
+  if (!regulator || !purposeCode || !usecaseCategory) return [];
+  
+  const template = getFilteredTemplate(regulator, purposeCode, usecaseCategory);
+  return template?.fiTypes || [];
+};
+
+// Get allowed consent types based on selected criteria
+export const getAllowedConsentTypes = (
+  regulator: string,
+  purposeCode: string,
+  usecaseCategory: string,
+  selectedFiTypes: string[] = []
+): string[] => {
+  if (!regulator || !purposeCode || !usecaseCategory) return [];
+  
+  const template = getFilteredTemplate(regulator, purposeCode, usecaseCategory, selectedFiTypes);
+  return template?.consentType || [];
+};
+
+// Get required fetch type based on selected criteria
+export const getRequiredFetchType = (
+  regulator: string,
+  purposeCode: string,
+  usecaseCategory: string,
+  selectedFiTypes: string[] = []
+): string | null => {
+  if (!regulator || !purposeCode || !usecaseCategory) return null;
+  
+  const template = getFilteredTemplate(regulator, purposeCode, usecaseCategory, selectedFiTypes);
+  return template?.fetchType || null;
 };
 
 export const isFieldRequired = (fieldName: string): boolean => {

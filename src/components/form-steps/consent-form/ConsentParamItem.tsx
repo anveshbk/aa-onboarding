@@ -14,7 +14,10 @@ import FrequencyInput from "./FrequencyInput";
 import { 
   getUsecaseCategories, 
   getPurposeCodes, 
-  getFilteredTemplate, 
+  getFilteredTemplate,
+  getAllowedFiTypes,
+  getAllowedConsentTypes,
+  getRequiredFetchType,
   isFieldRequired,
   formatMaxValidity 
 } from "./consentHelpers";
@@ -58,15 +61,14 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
   const usecaseCategories = getUsecaseCategories(regulator);
   const purposeCodes = getPurposeCodes(regulator, usecaseCategory);
   
-  // Get the current template based on the selected FI type (if any)
-  const selectedFiType = fiTypes.length > 0 ? fiTypes[0] : undefined;
+  // Get the current template based on all selected filters
   const currentTemplate = usecaseCategory && purposeCode 
-    ? getFilteredTemplate(regulator, purposeCode, usecaseCategory, selectedFiType) 
+    ? getFilteredTemplate(regulator, purposeCode, usecaseCategory, fiTypes, consentTypes) 
     : null;
   
-  const allowedFiTypes = currentTemplate?.fiTypes || [];
-  const requiredFetchType = currentTemplate?.fetchType || null;
-  const allowedConsentTypes = currentTemplate?.consentType || [];
+  const allowedFiTypes = getAllowedFiTypes(regulator, purposeCode, usecaseCategory);
+  const allowedConsentTypes = getAllowedConsentTypes(regulator, purposeCode, usecaseCategory, fiTypes);
+  const requiredFetchType = getRequiredFetchType(regulator, purposeCode, usecaseCategory, fiTypes);
   
   const maxFrequency = currentTemplate?.maxFrequency ? parseFrequencyString(currentTemplate.maxFrequency) : null;
   const maxFiDataRange = currentTemplate?.maxFiDataRange ? parsePeriodString(currentTemplate.maxFiDataRange) : null;
@@ -79,10 +81,16 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
     setValidationErrors({});
   }, [currentTemplate]);
   
-  // Update template values when FI type changes
+  // Update template values when selection changes
   useEffect(() => {
-    if (usecaseCategory && purposeCode && fiTypes.length > 0) {
-      const newTemplate = getFilteredTemplate(regulator, purposeCode, usecaseCategory, fiTypes[0]);
+    if (usecaseCategory && purposeCode) {
+      const newTemplate = getFilteredTemplate(
+        regulator, 
+        purposeCode, 
+        usecaseCategory, 
+        fiTypes, 
+        consentTypes
+      );
       
       // Reset validation errors
       setValidationErrors({});
@@ -111,16 +119,18 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
       updateDurationField('fiDataRange', maxFiDataRange);
       updateDurationField('dataLife', maxDataLife);
     }
-  }, [fiTypes, usecaseCategory, purposeCode, regulator, setValue, index, watch]);
+  }, [fiTypes, consentTypes, usecaseCategory, purposeCode, regulator, setValue, index, watch]);
   
+  // Force fetch type from template
   useEffect(() => {
-    if (currentTemplate?.fetchType) {
+    if (requiredFetchType) {
       setValue(`consentParams.${index}.fetchType`, 
-        currentTemplate.fetchType === "ONE-TIME" ? "Onetime" : "Periodic"
+        requiredFetchType === "ONE-TIME" ? "Onetime" : "Periodic"
       );
     }
-  }, [currentTemplate, setValue, index]);
+  }, [requiredFetchType, setValue, index]);
   
+  // Validate consent types against allowed values
   useEffect(() => {
     if (allowedConsentTypes.length > 0) {
       const currentConsentTypes = watch(`consentParams.${index}.consentType`) || [];
@@ -145,6 +155,7 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
     }
   }, [allowedConsentTypes, index, setValue, watch, toast]);
   
+  // Validation function for duration fields
   const validateField = (field: string, value: { number: string; unit: string } | undefined, maxValue: { number: string; unit: string } | null) => {
     if (!value || !maxValue) {
       setValidationErrors(prev => {
@@ -168,11 +179,13 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
     });
   };
   
+  // Validate consent validity period
   useEffect(() => {
     const consentValidity = watch(`consentParams.${index}.consentValidityPeriod`);
     validateField('consentValidity', consentValidity, maxConsentValidity);
   }, [watch(`consentParams.${index}.consentValidityPeriod`), maxConsentValidity]);
   
+  // Validate frequency for periodic fetch type
   useEffect(() => {
     const frequency = watch(`consentParams.${index}.dataFetchFrequency`);
     if (fetchType === "Periodic") {
@@ -186,16 +199,19 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
     }
   }, [watch(`consentParams.${index}.dataFetchFrequency`), maxFrequency, fetchType]);
   
+  // Validate FI data range
   useEffect(() => {
     const fiDataRange = watch(`consentParams.${index}.fiDataRange`);
     validateField('fiDataRange', fiDataRange, maxFiDataRange);
   }, [watch(`consentParams.${index}.fiDataRange`), maxFiDataRange]);
   
+  // Validate data life
   useEffect(() => {
     const dataLife = watch(`consentParams.${index}.dataLife`);
     validateField('dataLife', dataLife, maxDataLife);
   }, [watch(`consentParams.${index}.dataLife`), maxDataLife]);
   
+  // Validate consent types
   useEffect(() => {
     const currentConsentTypes = watch(`consentParams.${index}.consentType`) || [];
     
@@ -222,6 +238,7 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
     }
   }, [watch(`consentParams.${index}.consentType`), allowedConsentTypes]);
   
+  // Validate FI types
   useEffect(() => {
     const currentFiTypes = watch(`consentParams.${index}.fiTypes`) || [];
     
@@ -304,6 +321,7 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
                         setValue(`consentParams.${index}.consentType`, []);
                         setValidationErrors({});
                       }}
+                      multiple={false}
                     />
                   </FormControl>
                 )}
@@ -399,6 +417,7 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
                             });
                           }
                         }}
+                        multiple={false}
                       />
                     )}
                   </FormControl>
@@ -439,20 +458,8 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
                                   
                                   field.onChange(newValues);
                                   
-                                  const currentConsentTypes = watch(`consentParams.${index}.consentType`) || [];
-                                  
-                                  if (allowedConsentTypes.length > 0 && currentConsentTypes.length > 0) {
-                                    const invalidTypes = currentConsentTypes.filter(
-                                      (cType: string) => !allowedConsentTypes.includes(cType)
-                                    );
-                                    
-                                    if (invalidTypes.length > 0) {
-                                      const validTypes = currentConsentTypes.filter(
-                                        (cType: string) => allowedConsentTypes.includes(cType)
-                                      );
-                                      setValue(`consentParams.${index}.consentType`, validTypes);
-                                    }
-                                  }
+                                  // Reset consent types when FI types change
+                                  setValue(`consentParams.${index}.consentType`, []);
                                 }}
                               />
                               <label
@@ -497,7 +504,7 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
                         options={allowedConsentTypes.length > 0 ? allowedConsentTypes : ["Profile", "Summary", "Transactions"]}
                         value={field.value || []}
                         onChange={(value) => {
-                          const selectedValues = Array.isArray(value) ? value : [];
+                          const selectedValues = Array.isArray(value) ? value : [value].filter(Boolean);
                           if (allowedConsentTypes.length === 0 || 
                               selectedValues.every(v => allowedConsentTypes.includes(v))) {
                             field.onChange(selectedValues);

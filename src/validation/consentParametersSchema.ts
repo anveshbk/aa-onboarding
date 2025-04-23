@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+// ------------------ SCHEMAS ------------------
+
 const DurationSchema = z.object({
   number: z.string().optional(),
   unit: z.string().optional()
@@ -22,7 +24,8 @@ export const ConsentParametersSchema = z.object({
   consentParams: z.array(ConsentParamItemSchema).optional(),
 });
 
-// Define TypeScript interfaces for consent templates
+// ------------------ TYPES ------------------
+
 export interface Duration {
   number: string;
   unit: string;
@@ -40,7 +43,6 @@ export interface ConsentTemplate {
   consentType?: string[];
 }
 
-// Export TypeScript interfaces for type checking
 export type ConsentTemplateMap = {
   [key: string]: ConsentTemplate | ConsentTemplate[];
 };
@@ -49,137 +51,137 @@ export type ConsentTemplatesMap = {
   [regulator: string]: ConsentTemplateMap;
 };
 
-// Simple duration conversion between units (approximate)
+// ------------------ UTILS ------------------
+
+// Convert common units to days (approximate)
 export const toDays = (value: number, unit: string): number => {
   switch (unit.toLowerCase()) {
     case 'day': return value;
-    case 'month': return value * 30; // Approximation
-    case 'year': return value * 365; // Approximation
+    case 'month': return value * 30;
+    case 'year': return value * 365;
     default: return value;
   }
 };
 
+// Convert from days to a given unit
 export const fromDays = (days: number, targetUnit: string): number => {
   switch (targetUnit.toLowerCase()) {
     case 'day': return days;
-    case 'month': return days / 30; // Approximation
-    case 'year': return days / 365; // Approximation
+    case 'month': return days / 30;
+    case 'year': return days / 365;
     default: return days;
   }
 };
 
-// Parse template strings like "31 times per month" to extract value and unit
+// Parse frequency strings like "31 times per month"
 export const parseFrequencyString = (frequencyStr: string): Duration | null => {
   if (!frequencyStr || frequencyStr === "NA") return null;
-  
+
   const regex = /(\d+)\s+times?\s+per\s+(\w+)/i;
   const match = frequencyStr.match(regex);
-  
+
   if (match) {
     return {
       number: match[1],
       unit: match[2].charAt(0).toUpperCase() + match[2].slice(1).toLowerCase()
     };
   }
-  
+
   return null;
 };
 
-// Parse period strings like "1 Month", "6 months", "20 years"
+// Parse period strings like "6 Months", "20 years", "coterminous"
 export const parsePeriodString = (periodStr: string): Duration | null => {
   if (!periodStr || periodStr === "NA") return null;
-  
-  // Handle special cases
+
   if (periodStr.toLowerCase().includes("coterminous")) {
     return {
       number: "0",
       unit: "tenure"
     };
   }
-  
+
   const regex = /(\d+)\s+(\w+)/i;
   const match = periodStr.match(regex);
-  
+
   if (match) {
     let unit = match[2].toLowerCase();
-    // Convert to singular form if needed
     if (unit.endsWith('s')) unit = unit.slice(0, -1);
-    
-    // Capitalize first letter
     unit = unit.charAt(0).toUpperCase() + unit.slice(1);
-    
     return {
       number: match[1],
       unit: unit
     };
   }
-  
+
   return null;
 };
 
-// Convert a duration to a readable string
+// Convert duration to readable string
 export const durationToString = (duration: Duration | null): string => {
   if (!duration) return "";
-  
+
   if (duration.unit === "tenure") {
     return "Coterminous with loan tenure";
   }
-  
+
   return `${duration.number} ${duration.unit}${Number(duration.number) !== 1 ? 's' : ''}`;
 };
 
-// Convert a duration to another unit
+// Convert a duration into another unit
 export const convertDuration = (duration: Duration, targetUnit: string): Duration => {
   if (!duration.number || isNaN(Number(duration.number))) {
     return { number: "", unit: targetUnit };
   }
-  
-  // Convert to days first
+
   const valueInDays = toDays(Number(duration.number), duration.unit);
-  
-  // Then convert to target unit
   const convertedValue = fromDays(valueInDays, targetUnit);
-  
+
   return {
     number: String(Math.floor(convertedValue)),
     unit: targetUnit
   };
 };
 
-// Validate duration against maximum value
+// ------------------ VALIDATIONS ------------------
+
+// General duration validation
 export const validateDuration = (
   input: Duration | undefined,
   maxValue: Duration | null
 ): string | undefined => {
-  // If no input or maxValue, no validation needed
   if (!input || !maxValue) return undefined;
-  
-  // Special case for coterminous
-  if (maxValue.unit === "tenure") {
-    return undefined; // Always valid
-  }
-  
-  // If input number is empty or not a valid number, no validation needed
-  if (!input.number || input.number.trim() === "" || isNaN(Number(input.number))) {
-    return undefined;
-  }
-  
-  // If maxValue number is empty or not a valid number, no validation needed
-  if (!maxValue.number || maxValue.number.trim() === "" || isNaN(Number(maxValue.number))) {
-    return undefined;
-  }
-  
-  // Convert both to days for comparison
+  if (maxValue.unit === "tenure") return undefined;
+
+  if (!input.number || isNaN(Number(input.number))) return undefined;
+  if (!maxValue.number || isNaN(Number(maxValue.number))) return undefined;
+
   const inputDays = toDays(Number(input.number), input.unit);
   const maxDays = toDays(Number(maxValue.number), maxValue.unit);
-  
-  // Only show error if input is greater than max
+
   if (inputDays > maxDays) {
-    // Convert max days to the input unit for display
     const convertedMax = Math.floor(fromDays(maxDays, input.unit));
     return `Maximum allowed is ${convertedMax} ${input.unit}${convertedMax !== 1 ? 's' : ''}`;
   }
-  
-  // If input is valid (less than or equal to max), return undefined to clear error
+
+  return undefined;
+};
+
+// ✅ NEW: Frequency validation ("X times per unit")
+export const validateFrequency = (
+  input: Duration | undefined,
+  max: Duration | null
+): string | undefined => {
+  if (!input || !max) return undefined;
+  if (!input.number || !max.number) return undefined;
+  if (isNaN(Number(input.number)) || isNaN(Number(max.number))) return undefined;
+
+  const inputPerDay = Number(input.number) / toDays(1, input.unit);
+  const maxPerDay = Number(max.number) / toDays(1, max.unit);
+
+  if (inputPerDay > maxPerDay) {
+    return `Maximum allowed frequency is ${max.number} times per ${max.unit.toLowerCase()}`;
+  }
+
   return undefined;
 };

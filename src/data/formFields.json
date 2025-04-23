@@ -94,7 +94,7 @@
       {
         "id": "agreementExecuted",
         "name": "Agreement Executed",
-        "type": "boolean",
+        "type": "toggle",
         "description": "If yes, please upload the agreement document (max 5MB)",
         "required": false,
         "noBorder": true
@@ -191,7 +191,7 @@
       {
         "id": "consentRequestSMS",
         "name": "Consent request SMS",
-        "type": "boolean",
+        "type": "toggle",
         "description": "If Onemoney consent request SMS is to be enabled",
         "required": false,
         "noBorder": true
@@ -230,7 +230,7 @@
       {
         "id": "accountTypeFilter",
         "name": "Account type filter",
-        "type": "boolean",
+        "type": "toggle",
         "description": "Only savings / current account required especially for CASA this is applicable",
         "required": false,
         "noBorder": true
@@ -238,7 +238,7 @@
       {
         "id": "fipSelectionInHostApp",
         "name": "FIP selection in host app",
-        "type": "boolean",
+        "type": "toggle",
         "description": "If FIP selection happens in hostapp then is there any max limit in the no. of FIPs that customer can choose on host app",
         "required": false,
         "noBorder": true
@@ -269,7 +269,7 @@
       {
         "id": "targetedAutoDiscovery",
         "name": "Targeted auto discovery",
-        "type": "boolean",
+        "type": "toggle",
         "description": "This is applicable only for PFM and Wealth Management usecase (101 and 102).",
         "required": false,
         "noBorder": true
@@ -323,7 +323,7 @@
       {
         "id": "mobileVerified",
         "name": "Is mobile no. sent to Onemoney verified by host app",
-        "type": "boolean",
+        "type": "toggle",
         "description": "Kindly confirm the verification procedure in details",
         "required": false,
         "noBorder": true
@@ -338,7 +338,7 @@
       {
         "id": "fiuLogoVisible",
         "name": "FIU logo visible on Onemoney to customer",
-        "type": "boolean",
+        "type": "toggle",
         "description": "Not applicable for LSP journeys",
         "required": false,
         "noBorder": true

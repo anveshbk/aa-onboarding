@@ -156,19 +156,22 @@ export const validateFrequencyAgainstTemplate = (
   userInput: Duration | undefined,
   templateMaxFrequency: string | undefined
 ): string | undefined => {
-  if (!userInput || !userInput.number || !templateMaxFrequency) return undefined;
+  if (!userInput || !userInput.number || !userInput.unit || !templateMaxFrequency) return undefined;
 
   const parsedTemplate = parseFrequencyString(templateMaxFrequency);
-  if (!parsedTemplate) return undefined;
+  if (!parsedTemplate || !parsedTemplate.number || !parsedTemplate.unit) return undefined;
 
-  const inputTimesPerInputUnit = 1; // 1 fetch per input duration
-  const totalFetchesPerMonth = inputTimesPerInputUnit * toDays(Number(userInput.number), userInput.unit) / 1;
+  const userUnit = userInput.unit.toLowerCase();
+  const templateUnit = parsedTemplate.unit.toLowerCase();
 
-  const allowedFetchesPerMonth = Number(parsedTemplate.number) * (30 / toDays(1, parsedTemplate.unit));
+  const userFrequencyPerDay = 1 / toDays(Number(userInput.number), userUnit);
+  const userFrequencyInTemplateUnit = userFrequencyPerDay * toDays(1, templateUnit);
 
-  if (totalFetchesPerMonth > allowedFetchesPerMonth) {
-    const maxTimesPerInputUnit = allowedFetchesPerMonth / (toDays(Number(userInput.number), userInput.unit) / 1);
-    return `Maximum allowed is ${maxTimesPerInputUnit.toFixed(2)} times per ${userInput.unit.toLowerCase()}`;
+  const maxAllowed = Number(parsedTemplate.number);
+
+  if (userFrequencyInTemplateUnit > maxAllowed) {
+    const maxTimesPerUserUnit = maxAllowed / (toDays(1, templateUnit) / toDays(Number(userInput.number), userUnit));
+    return `Maximum allowed is ${maxTimesPerUserUnit.toFixed(2)} times per ${userUnit}`;
   }
 
   return undefined;

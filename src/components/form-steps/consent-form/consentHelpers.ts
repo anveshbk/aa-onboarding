@@ -27,10 +27,12 @@ export const getUsecaseCategories = (regulator: string) => {
     Object.values(consentTemplates[regulator]).forEach(template => {
       if (Array.isArray(template)) {
         template.forEach(t => {
-          if (t.usecaseCategory) categories.add(t.usecaseCategory);
+          if (t && typeof t === 'object' && 'usecaseCategory' in t) {
+            if (t.usecaseCategory) categories.add(t.usecaseCategory);
+          }
         });
-      } else if (template.usecaseCategory) {
-        categories.add(template.usecaseCategory);
+      } else if (template && typeof template === 'object' && 'usecaseCategory' in template) {
+        if (template.usecaseCategory) categories.add(template.usecaseCategory);
       }
     });
   }
@@ -40,10 +42,12 @@ export const getUsecaseCategories = (regulator: string) => {
     Object.values(consentTemplates["All"]).forEach(template => {
       if (Array.isArray(template)) {
         template.forEach(t => {
-          if (t.usecaseCategory) categories.add(t.usecaseCategory);
+          if (t && typeof t === 'object' && 'usecaseCategory' in t) {
+            if (t.usecaseCategory) categories.add(t.usecaseCategory);
+          }
         });
-      } else if (template.usecaseCategory) {
-        categories.add(template.usecaseCategory);
+      } else if (template && typeof template === 'object' && 'usecaseCategory' in template) {
+        if (template.usecaseCategory) categories.add(template.usecaseCategory);
       }
     });
   }

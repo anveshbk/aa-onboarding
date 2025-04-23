@@ -20,7 +20,7 @@ const DurationInput: React.FC<DurationInputProps> = ({
   onChange, 
   units, 
   placeholder,
-  maxValue,
+  maxValue = null,
   error,
   required = false
 }) => {

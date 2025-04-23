@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -37,7 +36,6 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
   const { toast } = useToast();
   const { control, watch, setValue } = useFormContext();
   
-  // Form values
   const usecaseCategory = watch(`consentParams.${index}.usecaseCategory`) || "";
   const purposeCode = watch(`consentParams.${index}.purposeCode`) || "";
   const fetchType = watch(`consentParams.${index}.fetchType`) || "Onetime";
@@ -48,7 +46,6 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
   const fiDataRange = watch(`consentParams.${index}.fiDataRange`);
   const dataLife = watch(`consentParams.${index}.dataLife`);
   
-  // Validation state
   const [validationErrors, setValidationErrors] = useState<{
     consentValidityPeriod?: string;
     dataFetchFrequency?: string;
@@ -56,14 +53,12 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
     dataLife?: string;
   }>({});
   
-  // Available options based on current selections
   const usecaseCategories = getUsecaseCategories(regulator);
   const purposeCodes = getPurposeCodes(regulator, usecaseCategory);
   const allowedFiTypes = getAllowedFiTypes(regulator, purposeCode, usecaseCategory);
   const allowedConsentTypes = getAllowedConsentTypes(regulator, purposeCode, usecaseCategory, fiTypes);
   const requiredFetchType = getRequiredFetchType(regulator, purposeCode, usecaseCategory);
   
-  // Maximum values from template
   const {
     maxConsentValidity,
     maxFrequency,
@@ -71,15 +66,12 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
     maxDataLife
   } = getMaxValues(regulator, purposeCode, usecaseCategory, fiTypes, consentType);
   
-  // Check if the template specifies coterminous
   const isCoterminous = maxConsentValidity?.unit === "tenure";
   
-  // Reset validations when template changes
   useEffect(() => {
     setValidationErrors({});
   }, [usecaseCategory, purposeCode, fiTypes, consentType]);
   
-  // Apply required fetch type from template
   useEffect(() => {
     if (requiredFetchType) {
       const fetchTypeValue = requiredFetchType === "ONE-TIME" ? "Onetime" : "Periodic";
@@ -87,7 +79,6 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
     }
   }, [requiredFetchType, setValue, index]);
   
-  // Validate FI Types against allowed values
   useEffect(() => {
     if (fiTypes.length > 0 && allowedFiTypes.length > 0) {
       const invalidTypes = fiTypes.filter(type => !allowedFiTypes.includes(type));
@@ -105,7 +96,6 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
     }
   }, [allowedFiTypes, fiTypes, setValue, index, toast]);
   
-  // Validate Consent Types against allowed values
   useEffect(() => {
     if (consentType.length > 0 && allowedConsentTypes.length > 0) {
       const invalidTypes = consentType.filter(type => !allowedConsentTypes.includes(type));
@@ -123,7 +113,6 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
     }
   }, [allowedConsentTypes, consentType, setValue, index, toast]);
   
-  // Validate consent validity period
   useEffect(() => {
     if (consentValidityPeriod && maxConsentValidity) {
       const validation = isValidDuration(consentValidityPeriod, maxConsentValidity);
@@ -140,7 +129,6 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
     }
   }, [consentValidityPeriod, maxConsentValidity]);
   
-  // Validate data fetch frequency (only for Periodic)
   useEffect(() => {
     if (fetchType === "Periodic" && dataFetchFrequency && maxFrequency) {
       const validation = isValidDuration(dataFetchFrequency, maxFrequency);
@@ -157,7 +145,6 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
     }
   }, [dataFetchFrequency, maxFrequency, fetchType]);
   
-  // Validate FI data range
   useEffect(() => {
     if (fiDataRange && maxFiDataRange) {
       const validation = isValidDuration(fiDataRange, maxFiDataRange);
@@ -174,7 +161,6 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
     }
   }, [fiDataRange, maxFiDataRange]);
   
-  // Validate data life
   useEffect(() => {
     if (dataLife && maxDataLife) {
       const validation = isValidDuration(dataLife, maxDataLife);
@@ -284,6 +270,7 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
                         field.onChange(value);
                       }}
                       units={["Day", "Month", "Year"]}
+                      maxValue={maxConsentValidity}
                       error={validationErrors.consentValidityPeriod}
                       required={isFieldRequired('consentValidityPeriod')}
                     />
@@ -450,6 +437,7 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
                           field.onChange(value);
                         }}
                         units={["Day", "Month", "Year"]}
+                        maxValue={maxFrequency}
                         error={validationErrors.dataFetchFrequency}
                       />
                     </FormControl>
@@ -478,6 +466,7 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
                         field.onChange(value);
                       }}
                       units={["Day", "Month", "Year"]}
+                      maxValue={maxFiDataRange}
                       error={validationErrors.fiDataRange}
                       required={isFieldRequired('fiDataRange')}
                     />
@@ -506,6 +495,7 @@ const ConsentParamItem: React.FC<ConsentParamItemProps> = ({
                         field.onChange(value);
                       }}
                       units={["Day", "Month", "Year"]}
+                      maxValue={maxDataLife}
                       error={validationErrors.dataLife}
                       required={isFieldRequired('dataLife')}
                     />

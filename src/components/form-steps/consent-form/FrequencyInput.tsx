@@ -12,7 +12,8 @@ const FrequencyInput: React.FC<FrequencyInputProps> = ({
   onChange, 
   units,
   error,
-  required = false
+  required = false,
+  maxValue = null
 }) => {
   return (
     <div className="space-y-2">

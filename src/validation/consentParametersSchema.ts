@@ -136,22 +136,23 @@ export const validateDuration = (
   return undefined;
 };
 
+// Frequency validation updated
 export const validateFrequencyAgainstTemplate = (
   userInput: Duration | undefined,
   templateMaxFrequency: string | undefined
 ): string | undefined => {
   if (!userInput || !userInput.number || !userInput.unit || !templateMaxFrequency) return undefined;
 
-  const maxDuration = parsePeriodString(templateMaxFrequency);
-  if (!maxDuration || !maxDuration.number || !maxDuration.unit) return undefined;
+  const parsedTemplate = parsePeriodString(templateMaxFrequency);
+  if (!parsedTemplate || !parsedTemplate.number || !parsedTemplate.unit) return undefined;
 
-  const inputDays = toDays(Number(userInput.number), userInput.unit);
-  const maxDays = toDays(Number(maxDuration.number), maxDuration.unit);
+  const userInputDays = toDays(Number(userInput.number), userInput.unit);
+  const templateMaxDays = toDays(Number(parsedTemplate.number), parsedTemplate.unit);
 
-  if (inputDays < maxDays) return undefined;
+  if (userInputDays <= templateMaxDays) return undefined;  // Valid input
 
-  const allowedTimesPerInputUnit = Math.floor(toDays(1, userInput.unit) / maxDays);
-  return `Maximum allowed is ${allowedTimesPerInputUnit} times per ${userInput.unit.toLowerCase()}`;
+  const maxTimesPerInputUnit = Math.floor(templateMaxDays / userInputDays);
+  return `Maximum allowed is ${maxTimesPerInputUnit} times per ${userInput.unit.toLowerCase()}`;
 };
 
 // Optional helper to format the frequency as displayable string

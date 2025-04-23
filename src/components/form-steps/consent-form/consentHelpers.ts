@@ -1,5 +1,5 @@
 
-import { ConsentTemplate, ConsentTemplatesMap, Duration, parsePeriodString, toDays } from "@/validation/consentParametersSchema";
+import { ConsentTemplate, ConsentTemplatesMap, Duration } from "@/validation/consentParametersSchema";
 import formFields from "@/data/formFields.json";
 
 // Define proper types for the template structures
@@ -407,29 +407,4 @@ export const getMaxValues = (
 export const isFieldRequired = (fieldName: string): boolean => {
   const field = formFields.consentParameters?.consentParamFields?.find(f => f.id === fieldName);
   return field?.required === true;
-};
-
-export const validateFrequencyAgainstTemplate = (
-  userInput: Duration | undefined,
-  templateMaxFrequency: Duration | string | undefined
-): string | undefined => {
-  if (!userInput || !userInput.number || !userInput.unit) return undefined;
-  
-  // Handle case where templateMaxFrequency is already a Duration object
-  let parsedTemplate: Duration | null = null;
-  if (typeof templateMaxFrequency === 'string') {
-    parsedTemplate = parsePeriodString(templateMaxFrequency);
-  } else {
-    parsedTemplate = templateMaxFrequency;
-  }
-  
-  if (!parsedTemplate || !parsedTemplate.number || !parsedTemplate.unit) return undefined;
-
-  // Convert both to days for comparison
-  const userInputDays = toDays(1, userInput.unit) / Number(userInput.number);
-  const templateMinDays = toDays(1, parsedTemplate.unit) / Number(parsedTemplate.number);
-
-  if (userInputDays >= templateMinDays) return undefined;  // Valid input
-
-  return `Maximum allowed frequency is ${parsedTemplate.number} times per ${parsedTemplate.unit.toLowerCase()}`;
 };

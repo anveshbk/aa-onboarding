@@ -29,7 +29,7 @@ const FrequencyInput: React.FC<FrequencyInputProps> = ({
           className="w-24"
           required={required}
         />
-        <span className="text-sm font-medium">times per</span>
+        <span className="text-sm font-medium">times</span>
         <Select
           value={value?.unit || units[0]}
           onValueChange={(unit) => onChange({ 
@@ -43,7 +43,7 @@ const FrequencyInput: React.FC<FrequencyInputProps> = ({
           <SelectContent>
             {units.map((unit) => (
               <SelectItem key={unit} value={unit}>
-                {unit.toLowerCase()}
+                {unit}
               </SelectItem>
             ))}
           </SelectContent>
@@ -51,8 +51,8 @@ const FrequencyInput: React.FC<FrequencyInputProps> = ({
       </div>
       
       {error && (
-        <p className="text-destructive text-sm flex items-center gap-1">
-          <AlertCircle className="h-3 w-3" /> {error}
+        <p className="text-destructive text-sm flex items-center">
+          <AlertCircle className="h-3 w-3 mr-1" /> {error}
         </p>
       )}
     </div>

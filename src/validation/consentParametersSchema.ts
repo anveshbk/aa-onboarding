@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+// ------------------ SCHEMAS ------------------
+
 const DurationSchema = z.object({
   number: z.string().optional(),
   unit: z.string().optional()
@@ -21,6 +23,8 @@ const ConsentParamItemSchema = z.object({
 export const ConsentParametersSchema = z.object({
   consentParams: z.array(ConsentParamItemSchema).optional(),
 });
+
+// ------------------ TYPES ------------------
 
 export interface Duration {
   number: string;
@@ -47,6 +51,9 @@ export type ConsentTemplatesMap = {
   [regulator: string]: ConsentTemplateMap;
 };
 
+// ------------------ UTILS ------------------
+
+// Convert common units to days (approximate)
 export const toDays = (value: number, unit: string): number => {
   switch (unit.toLowerCase()) {
     case 'day': return value;
@@ -56,6 +63,7 @@ export const toDays = (value: number, unit: string): number => {
   }
 };
 
+// Convert from days to a given unit
 export const fromDays = (days: number, targetUnit: string): number => {
   switch (targetUnit.toLowerCase()) {
     case 'day': return days;
@@ -65,6 +73,24 @@ export const fromDays = (days: number, targetUnit: string): number => {
   }
 };
 
+// Parse frequency strings like "31 times per month"
+export const parseFrequencyString = (frequencyStr: string): Duration | null => {
+  if (!frequencyStr || frequencyStr === "NA") return null;
+
+  const regex = /(\d+)\s+times?\s+per\s+(\w+)/i;
+  const match = frequencyStr.match(regex);
+
+  if (match) {
+    return {
+      number: match[1],
+      unit: match[2].charAt(0).toUpperCase() + match[2].slice(1).toLowerCase()
+    };
+  }
+
+  return null;
+};
+
+// Parse period strings like "6 Months", "20 years", "coterminous"
 export const parsePeriodString = (periodStr: string): Duration | null => {
   if (!periodStr || periodStr === "NA") return null;
 
@@ -75,14 +101,13 @@ export const parsePeriodString = (periodStr: string): Duration | null => {
     };
   }
 
-  const regex = /([\d.]+)\s+(\w+)/i;
+  const regex = /(\d+)\s+(\w+)/i;
   const match = periodStr.match(regex);
 
   if (match) {
     let unit = match[2].toLowerCase();
     if (unit.endsWith('s')) unit = unit.slice(0, -1);
     unit = unit.charAt(0).toUpperCase() + unit.slice(1);
-
     return {
       number: match[1],
       unit: unit
@@ -92,6 +117,7 @@ export const parsePeriodString = (periodStr: string): Duration | null => {
   return null;
 };
 
+// Convert duration to readable string
 export const durationToString = (duration: Duration | null): string => {
   if (!duration) return "";
 
@@ -102,6 +128,7 @@ export const durationToString = (duration: Duration | null): string => {
   return `${duration.number} ${duration.unit}${Number(duration.number) !== 1 ? 's' : ''}`;
 };
 
+// Convert a duration into another unit
 export const convertDuration = (duration: Duration, targetUnit: string): Duration => {
   if (!duration.number || isNaN(Number(duration.number))) {
     return { number: "", unit: targetUnit };
@@ -116,14 +143,18 @@ export const convertDuration = (duration: Duration, targetUnit: string): Duratio
   };
 };
 
+// ------------------ VALIDATIONS ------------------
+
+// General duration validation
 export const validateDuration = (
   input: Duration | undefined,
   maxValue: Duration | null
 ): string | undefined => {
   if (!input || !maxValue) return undefined;
   if (maxValue.unit === "tenure") return undefined;
-  if (!input.number || input.number.trim() === "" || isNaN(Number(input.number))) return undefined;
-  if (!maxValue.number || maxValue.number.trim() === "" || isNaN(Number(maxValue.number))) return undefined;
+
+  if (!input.number || isNaN(Number(input.number))) return undefined;
+  if (!maxValue.number || isNaN(Number(maxValue.number))) return undefined;
 
   const inputDays = toDays(Number(input.number), input.unit);
   const maxDays = toDays(Number(maxValue.number), maxValue.unit);
@@ -136,25 +167,21 @@ export const validateDuration = (
   return undefined;
 };
 
-export const validateFrequencyAgainstTemplate = (
-  userInput: Duration | undefined,
-  templateMaxFrequency: string | undefined
+// ✅ NEW: Frequency validation ("X times per unit")
+export const validateFrequency = (
+  input: Duration | undefined,
+  max: Duration | null
 ): string | undefined => {
-  if (!userInput || !userInput.number || !userInput.unit || !templateMaxFrequency) return undefined;
+  if (!input || !max) return undefined;
+  if (!input.number || !max.number) return undefined;
+  if (isNaN(Number(input.number)) || isNaN(Number(max.number))) return undefined;
 
-  const parsedTemplate = parsePeriodString(templateMaxFrequency);
-  if (!parsedTemplate || !parsedTemplate.number || !parsedTemplate.unit) return undefined;
+  const inputPerDay = Number(input.number) / toDays(1, input.unit);
+  const maxPerDay = Number(max.number) / toDays(1, max.unit);
 
-  // Convert both to days for comparison
-  const userInputDays = toDays(1, userInput.unit) / Number(userInput.number);
-  const templateMinDays = toDays(1, parsedTemplate.unit) / Number(parsedTemplate.number);
+  if (inputPerDay > maxPerDay) {
+    return `Maximum allowed frequency is ${max.number} times per ${max.unit.toLowerCase()}`;
+  }
 
-  if (userInputDays >= templateMinDays) return undefined;  // Valid input
-
-  return `Maximum allowed frequency is ${parsedTemplate.number} times per ${parsedTemplate.unit.toLowerCase()}`;
-};
-
-export const formatFrequencyForDisplay = (duration: Duration): string => {
-  if (!duration?.number || !duration?.unit) return "";
-  return `${duration.number} times per ${duration.unit.toLowerCase()}`;
+  return undefined;
 };

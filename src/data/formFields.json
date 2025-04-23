@@ -546,7 +546,7 @@
         "fiTypes": ["DEPOSIT", "TERM_DEPOSIT", "RECURRING_DEPOSIT", "SIP", "CP", "GOVT_SECURITIES", "EQUITIES", "BONDS", "DEBENTURES", "MUTUAL_FUNDS", "ETF", "IDR", "CIS", "AIF", "INVIT", "REIT", "GSTR1_3B"],
         "fetchType": "PERIODIC",
         "consentType": ["Profile", "Summary", "Transactions"],
-        "maxFrequency": "31 times per month",
+        "maxFrequency": "31 month",
         "maxFiDataRange": "13 Months for other FI Types, 20 years for SEBI FI Types",
         "maxConsentValidity": "1 Year",
         "maxDataLife": "1 Month"
@@ -557,7 +557,7 @@
         "fiTypes": ["DEPOSIT", "TERM_DEPOSIT", "RECURRING_DEPOSIT", "SIP", "CP", "GOVT_SECURITIES", "EQUITIES", "BONDS", "DEBENTURES", "MUTUAL_FUNDS", "ETF", "IDR", "CIS", "AIF", "INVIT", "REIT", "GSTR1_3B"],
         "fetchType": "PERIODIC",
         "consentType": ["Profile", "Summary", "Transactions"],
-        "maxFrequency": "45 Times per Month",
+        "maxFrequency": "45 Month",
         "maxFiDataRange": "10 years for SEBI FI Types, 13 Months for others",
         "maxConsentValidity": "1 Year",
         "maxDataLife": "1 Month"
@@ -568,7 +568,7 @@
         "fiTypes": ["SIP", "EQUITIES", "DEBENTURES", "MUTUAL_FUNDS", "ETF", "IDR", "CIS", "AIF", "INVIT", "REIT"],
         "fetchType": "PERIODIC",
         "consentType": ["Profile", "Summary", "Transactions"],
-        "maxFrequency": "25 times per month",
+        "maxFrequency": "25 month",
         "maxFiDataRange": "6 months",
         "maxConsentValidity": "1 year",
         "maxDataLife": "7 days"
@@ -604,7 +604,7 @@
           "fiTypes": ["DEPOSIT", "TERM_DEPOSIT", "RECURRING_DEPOSIT", "SIP", "CP", "GOVT_SECURITIES", "EQUITIES", "BONDS", "DEBENTURES", "MUTUAL_FUNDS", "ETF", "IDR", "CIS", "AIF", "INVIT", "REIT", "GSTR1_3B"],
           "fetchType": "PERIODIC",
           "consentType": ["Profile", "Summary", "Transactions"],
-          "maxFrequency": "5 times per Month",
+          "maxFrequency": "5 Month",
           "maxFiDataRange": "6 months",
           "maxConsentValidity": "Coterminous with loan tenure",
           "maxDataLife": "1 Month"
@@ -615,7 +615,7 @@
           "fiTypes": ["DEPOSIT"],
           "fetchType": "PERIODIC",
           "consentType": ["Summary"],
-          "maxFrequency": "1 per day",
+          "maxFrequency": "1 day",
           "maxFiDataRange": "1 day",
           "maxConsentValidity": "Coterminous with loan tenure",
           "maxDataLife": "1 Month"
@@ -626,7 +626,7 @@
           "fiTypes": ["DEPOSIT", "GSTR1_3B"],
           "fetchType": "PERIODIC",
           "consentType": ["Profile", "Summary", "Transactions"],
-          "maxFrequency": "1 per month",
+          "maxFrequency": "1 month",
           "maxFiDataRange": "6 months",
           "maxConsentValidity": "1 year",
           "maxDataLife": "90 days"
@@ -653,7 +653,7 @@
         "fiTypes": ["DEPOSIT"],
         "fetchType": "PERIODIC",
         "consentType": ["Profile", "Summary", "Transactions"],
-        "maxFrequency": "3 times per month",
+        "maxFrequency": "3 month",
         "maxFiDataRange": "1 month",
         "maxConsentValidity": "18 Months",
         "maxDataLife": "1 Day"

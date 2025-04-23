@@ -50,7 +50,7 @@ export type ConsentTemplatesMap = {
   [regulator: string]: ConsentTemplateMap;
 };
 
-// Helper functions for duration validation
+// Simple duration conversion between units (approximate)
 export const toDays = (value: number, unit: string): number => {
   switch (unit.toLowerCase()) {
     case 'day': return value;
@@ -79,7 +79,7 @@ export const parseFrequencyString = (frequencyStr: string): Duration | null => {
   if (match) {
     return {
       number: match[1],
-      unit: match[2].toLowerCase()
+      unit: match[2].charAt(0).toUpperCase() + match[2].slice(1).toLowerCase()
     };
   }
   
@@ -93,7 +93,7 @@ export const parsePeriodString = (periodStr: string): Duration | null => {
   // Handle special cases
   if (periodStr.toLowerCase().includes("coterminous")) {
     return {
-      number: "999", // Special value for coterminous
+      number: "0",
       unit: "tenure"
     };
   }
@@ -105,6 +105,9 @@ export const parsePeriodString = (periodStr: string): Duration | null => {
     let unit = match[2].toLowerCase();
     // Convert to singular form if needed
     if (unit.endsWith('s')) unit = unit.slice(0, -1);
+    
+    // Capitalize first letter
+    unit = unit.charAt(0).toUpperCase() + unit.slice(1);
     
     return {
       number: match[1],
@@ -144,7 +147,7 @@ export const convertDuration = (duration: Duration, targetUnit: string): Duratio
   };
 };
 
-// Validate duration against maximum value with improved error clearing
+// Validate duration against maximum value
 export const validateDuration = (
   input: Duration | undefined,
   maxValue: Duration | null

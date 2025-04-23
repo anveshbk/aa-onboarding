@@ -17,33 +17,33 @@ interface TemplateData {
 
 // Get all usecase categories based on regulator
 export const getUsecaseCategories = (regulator: string) => {
+  if (!regulator) return [];
+  
+  const consentTemplates = formFields.consentTemplates as ConsentTemplatesMap;
   const categories = new Set<string>();
   
-  if (formFields.consentTemplates[regulator]) {
-    Object.values(formFields.consentTemplates[regulator]).forEach(template => {
+  // Process regulator-specific templates
+  if (consentTemplates[regulator]) {
+    Object.values(consentTemplates[regulator]).forEach(template => {
       if (Array.isArray(template)) {
         template.forEach(t => {
-          const typedTemplate = t as TemplateData;
-          if (typedTemplate.usecaseCategory) categories.add(typedTemplate.usecaseCategory);
+          if (t.usecaseCategory) categories.add(t.usecaseCategory);
         });
-      } else {
-        const typedTemplate = template as TemplateData;
-        if (typedTemplate.usecaseCategory) categories.add(typedTemplate.usecaseCategory);
+      } else if (template.usecaseCategory) {
+        categories.add(template.usecaseCategory);
       }
     });
   }
   
-  // Also consider templates marked for "All" regulators
-  if (formFields.consentTemplates["All"]) {
-    Object.values(formFields.consentTemplates["All"]).forEach(template => {
+  // Also process templates marked for "All" regulators
+  if (consentTemplates["All"]) {
+    Object.values(consentTemplates["All"]).forEach(template => {
       if (Array.isArray(template)) {
         template.forEach(t => {
-          const typedTemplate = t as TemplateData;
-          if (typedTemplate.usecaseCategory) categories.add(typedTemplate.usecaseCategory);
+          if (t.usecaseCategory) categories.add(t.usecaseCategory);
         });
-      } else {
-        const typedTemplate = template as TemplateData;
-        if (typedTemplate.usecaseCategory) categories.add(typedTemplate.usecaseCategory);
+      } else if (template.usecaseCategory) {
+        categories.add(template.usecaseCategory);
       }
     });
   }
@@ -55,99 +55,74 @@ export const getUsecaseCategories = (regulator: string) => {
 export const getPurposeCodes = (regulator: string, usecaseCategory: string) => {
   if (!regulator || !usecaseCategory) return [];
   
-  const templates = formFields.consentTemplates;
-  let codes: string[] = [];
+  const consentTemplates = formFields.consentTemplates as ConsentTemplatesMap;
+  const purposeCodes = new Set<string>();
   
-  const extractPurposeCodes = (regulatorTemplates: any) => {
-    Object.entries(regulatorTemplates).forEach(([code, templateData]) => {
-      if (Array.isArray(templateData)) {
-        if (templateData.some(t => (t as TemplateData).usecaseCategory === usecaseCategory)) {
-          codes.push(code);
+  const checkTemplates = (templates: any) => {
+    Object.entries(templates).forEach(([code, template]) => {
+      if (Array.isArray(template)) {
+        if (template.some(t => t.usecaseCategory === usecaseCategory)) {
+          purposeCodes.add(code);
         }
-      } else if ((templateData as TemplateData).usecaseCategory === usecaseCategory) {
-        codes.push(code);
+      } else if (template.usecaseCategory === usecaseCategory) {
+        purposeCodes.add(code);
       }
     });
   };
   
   // Check regulator-specific templates
-  if (templates[regulator]) {
-    extractPurposeCodes(templates[regulator]);
+  if (consentTemplates[regulator]) {
+    checkTemplates(consentTemplates[regulator]);
   }
   
-  // Also check templates for "All" regulators
-  if (templates["All"]) {
-    extractPurposeCodes(templates["All"]);
+  // Check templates for "All" regulators
+  if (consentTemplates["All"]) {
+    checkTemplates(consentTemplates["All"]);
   }
   
-  return [...new Set(codes)].sort();
+  return Array.from(purposeCodes).sort();
 };
 
-// Find the best matching template based on multiple criteria
-export const getFilteredTemplate = (
-  regulator: string, 
-  purposeCode: string, 
-  usecaseCategory: string,
-  selectedFiTypes: string[] = [],
-  selectedConsentTypes: string[] = []
-): ConsentTemplate | null => {
-  const consentTemplates = formFields.consentTemplates as ConsentTemplatesMap;
+// Find all templates matching the criteria
+export const findMatchingTemplates = (
+  regulator: string,
+  purposeCode: string,
+  usecaseCategory: string
+): ConsentTemplate[] => {
+  if (!regulator || !purposeCode || !usecaseCategory) return [];
   
-  const findMatchingTemplate = (templates: ConsentTemplate | ConsentTemplate[]): ConsentTemplate | null => {
-    if (Array.isArray(templates)) {
-      // Try to find a template that matches all criteria including FI types and consent types
-      if (selectedFiTypes.length > 0) {
-        const fiTypeMatches = templates.filter(t => {
-          if (t.usecaseCategory !== usecaseCategory) return false;
-          if (!t.fiTypes) return false;
-          
-          // Check if any selected FI type is in the template's allowed FI types
-          return selectedFiTypes.some(selectedType => t.fiTypes?.includes(selectedType));
-        });
-
-        if (fiTypeMatches.length > 0) {
-          // If we have FI type matches, try to further filter by consent types if possible
-          if (selectedConsentTypes.length > 0) {
-            const consentTypeMatches = fiTypeMatches.filter(t => {
-              if (!t.consentType) return false;
-              return selectedConsentTypes.some(selectedType => t.consentType?.includes(selectedType));
-            });
-            
-            if (consentTypeMatches.length > 0) {
-              return consentTypeMatches[0]; // Return the first matching template
-            }
-          }
-          
-          return fiTypeMatches[0]; // Return the first FI type matching template
-        }
-      }
-      
-      // If no specific matches, return the first template for this usecase category
-      return templates.find(t => t.usecaseCategory === usecaseCategory) || null;
-    } 
-    else if (templates.usecaseCategory === usecaseCategory) {
-      return templates;
-    }
+  const consentTemplates = formFields.consentTemplates as ConsentTemplatesMap;
+  const matchingTemplates: ConsentTemplate[] = [];
+  
+  const checkAndAddTemplates = (templates: any) => {
+    if (!templates[purposeCode]) return;
     
-    return null;
+    const template = templates[purposeCode];
+    if (Array.isArray(template)) {
+      template.forEach(t => {
+        if (t.usecaseCategory === usecaseCategory) {
+          matchingTemplates.push(t);
+        }
+      });
+    } else if (template.usecaseCategory === usecaseCategory) {
+      matchingTemplates.push(template);
+    }
   };
   
-  // First check regulator-specific templates
-  if (consentTemplates[regulator] && consentTemplates[regulator][purposeCode]) {
-    const template = findMatchingTemplate(consentTemplates[regulator][purposeCode]);
-    if (template) return template;
+  // Check regulator-specific templates
+  if (consentTemplates[regulator]) {
+    checkAndAddTemplates(consentTemplates[regulator]);
   }
   
-  // Then check templates for "All" regulators
-  if (consentTemplates["All"] && consentTemplates["All"][purposeCode]) {
-    const template = findMatchingTemplate(consentTemplates["All"][purposeCode]);
-    if (template) return template;
+  // Check templates for "All" regulators
+  if (consentTemplates["All"]) {
+    checkAndAddTemplates(consentTemplates["All"]);
   }
   
-  return null;
+  return matchingTemplates;
 };
 
-// Get allowed FI types based on selected regulator, purpose code, and usecase category
+// Get all allowed FI types based on regulator, purpose code and usecase category
 export const getAllowedFiTypes = (
   regulator: string,
   purposeCode: string,
@@ -155,8 +130,35 @@ export const getAllowedFiTypes = (
 ): string[] => {
   if (!regulator || !purposeCode || !usecaseCategory) return [];
   
-  const template = getFilteredTemplate(regulator, purposeCode, usecaseCategory);
-  return template?.fiTypes || [];
+  const matchingTemplates = findMatchingTemplates(regulator, purposeCode, usecaseCategory);
+  
+  // Collect all unique FI types from matching templates
+  const fiTypes = new Set<string>();
+  matchingTemplates.forEach(template => {
+    if (template.fiTypes) {
+      template.fiTypes.forEach(type => fiTypes.add(type));
+    }
+  });
+  
+  return Array.from(fiTypes).sort();
+};
+
+// Get required fetch type based on template
+export const getRequiredFetchType = (
+  regulator: string,
+  purposeCode: string,
+  usecaseCategory: string
+): string | null => {
+  if (!regulator || !purposeCode || !usecaseCategory) return null;
+  
+  const matchingTemplates = findMatchingTemplates(regulator, purposeCode, usecaseCategory);
+  if (matchingTemplates.length === 0) return null;
+  
+  // Check if all templates have the same fetch type
+  const fetchType = matchingTemplates[0].fetchType;
+  const allSame = matchingTemplates.every(t => t.fetchType === fetchType);
+  
+  return allSame ? fetchType : null;
 };
 
 // Get allowed consent types based on selected criteria
@@ -168,60 +170,232 @@ export const getAllowedConsentTypes = (
 ): string[] => {
   if (!regulator || !purposeCode || !usecaseCategory) return [];
   
-  const template = getFilteredTemplate(regulator, purposeCode, usecaseCategory, selectedFiTypes);
-  return template?.consentType || [];
+  const matchingTemplates = findMatchingTemplates(regulator, purposeCode, usecaseCategory);
+  
+  // Filter templates that match selected FI types
+  let filteredTemplates = matchingTemplates;
+  if (selectedFiTypes.length > 0) {
+    filteredTemplates = matchingTemplates.filter(template => {
+      if (!template.fiTypes) return false;
+      return selectedFiTypes.some(fiType => template.fiTypes?.includes(fiType));
+    });
+    
+    // If no templates match the selected FI types, fall back to all matching templates
+    if (filteredTemplates.length === 0) {
+      filteredTemplates = matchingTemplates;
+    }
+  }
+  
+  // Collect all unique consent types from filtered templates
+  const consentTypes = new Set<string>();
+  filteredTemplates.forEach(template => {
+    if (template.consentType) {
+      template.consentType.forEach(type => consentTypes.add(type));
+    }
+  });
+  
+  return Array.from(consentTypes).sort();
 };
 
-// Get required fetch type based on selected criteria
-export const getRequiredFetchType = (
+// Find best matching template based on all criteria
+export const getBestMatchingTemplate = (
   regulator: string,
   purposeCode: string,
   usecaseCategory: string,
-  selectedFiTypes: string[] = []
-): string | null => {
+  selectedFiTypes: string[] = [],
+  selectedConsentTypes: string[] = []
+): ConsentTemplate | null => {
   if (!regulator || !purposeCode || !usecaseCategory) return null;
   
-  const template = getFilteredTemplate(regulator, purposeCode, usecaseCategory, selectedFiTypes);
-  return template?.fetchType || null;
-};
-
-export const isFieldRequired = (fieldName: string): boolean => {
-  const field = formFields.consentParameters?.consentParamFields?.find(f => f.id === fieldName);
-  return field?.required === true;
-};
-
-// Helper function to format the max validity period for display
-export const formatMaxValidity = (maxConsentValidity: string | undefined): string => {
-  if (!maxConsentValidity) return "";
+  const matchingTemplates = findMatchingTemplates(regulator, purposeCode, usecaseCategory);
+  if (matchingTemplates.length === 0) return null;
   
-  // Special handling for "Coterminous with loan tenure"
-  if (maxConsentValidity.toLowerCase().includes("coterminous")) {
+  // Score templates based on how well they match the selected criteria
+  const scoredTemplates = matchingTemplates.map(template => {
+    let score = 0;
+    
+    // Score based on FI type matches
+    if (selectedFiTypes.length > 0 && template.fiTypes) {
+      const fiTypeMatches = selectedFiTypes.filter(fiType => 
+        template.fiTypes?.includes(fiType)
+      ).length;
+      score += fiTypeMatches * 10; // Weight FI type matches higher
+    }
+    
+    // Score based on consent type matches
+    if (selectedConsentTypes.length > 0 && template.consentType) {
+      const consentTypeMatches = selectedConsentTypes.filter(consentType => 
+        template.consentType?.includes(consentType)
+      ).length;
+      score += consentTypeMatches * 5;
+    }
+    
+    return { template, score };
+  });
+  
+  // Sort by score (descending)
+  scoredTemplates.sort((a, b) => b.score - a.score);
+  
+  // Return the template with the highest score
+  return scoredTemplates[0]?.template || matchingTemplates[0];
+};
+
+// Parse string durations like "1 Month" or "13 Months"
+export const parseDuration = (durationStr: string | undefined): Duration | null => {
+  if (!durationStr) return null;
+  
+  // Handle special cases
+  if (durationStr.toLowerCase().includes("coterminous")) {
+    return {
+      number: "0", // Special value for coterminous
+      unit: "tenure"
+    };
+  }
+  
+  const regex = /(\d+)\s+(\w+)/i;
+  const match = durationStr.match(regex);
+  
+  if (match) {
+    let unit = match[2].toLowerCase();
+    // Convert to singular form if needed
+    if (unit.endsWith('s')) unit = unit.slice(0, -1);
+    
+    // Capitalize first letter
+    unit = unit.charAt(0).toUpperCase() + unit.slice(1);
+    
+    return {
+      number: match[1],
+      unit: unit
+    };
+  }
+  
+  return null;
+};
+
+// Parse frequency strings like "31 times per month"
+export const parseFrequency = (frequencyStr: string | undefined): Duration | null => {
+  if (!frequencyStr || frequencyStr === "NA") return null;
+  
+  const regex = /(\d+)\s+times?\s+per\s+(\w+)/i;
+  const match = frequencyStr.match(regex);
+  
+  if (match) {
+    let unit = match[2].toLowerCase();
+    // Capitalize first letter
+    unit = unit.charAt(0).toUpperCase() + unit.slice(1);
+    
+    return {
+      number: match[1],
+      unit: unit
+    };
+  }
+  
+  return null;
+};
+
+// Convert between different duration units
+export const convertDuration = (
+  value: number,
+  fromUnit: string,
+  toUnit: string
+): number => {
+  // Convert to days first
+  let valueInDays = value;
+  switch (fromUnit.toLowerCase()) {
+    case 'month':
+      valueInDays = value * 30; // Approximate
+      break;
+    case 'year':
+      valueInDays = value * 365; // Approximate
+      break;
+    default: // 'day'
+      break;
+  }
+  
+  // Convert from days to target unit
+  switch (toUnit.toLowerCase()) {
+    case 'month':
+      return Math.ceil(valueInDays / 30);
+    case 'year':
+      return Math.ceil(valueInDays / 365);
+    default: // 'day'
+      return valueInDays;
+  }
+};
+
+// Validate if a duration is within the maximum allowed
+export const isValidDuration = (
+  input: Duration | undefined,
+  maxValue: Duration | null
+): { isValid: boolean; message?: string } => {
+  // If no maxValue or input is undefined, consider it valid
+  if (!maxValue || !input || !input.number || input.number.trim() === "") {
+    return { isValid: true };
+  }
+  
+  // Special case for coterminous
+  if (maxValue.unit === "tenure") {
+    return { isValid: true };
+  }
+  
+  const inputValue = Number(input.number);
+  if (isNaN(inputValue) || inputValue <= 0) {
+    return { isValid: false, message: "Please enter a valid positive number" };
+  }
+  
+  // Convert both to days for comparison
+  const inputInDays = convertDuration(inputValue, input.unit, "Day");
+  const maxInDays = convertDuration(Number(maxValue.number), maxValue.unit, "Day");
+  
+  if (inputInDays > maxInDays) {
+    // Convert max to input's unit for message
+    const maxInInputUnit = convertDuration(Number(maxValue.number), maxValue.unit, input.unit);
+    return {
+      isValid: false,
+      message: `Maximum allowed is ${maxInInputUnit} ${input.unit}${maxInInputUnit !== 1 ? 's' : ''}`
+    };
+  }
+  
+  return { isValid: true };
+};
+
+// Format duration for display
+export const formatDuration = (duration: Duration | null): string => {
+  if (!duration) return "";
+  
+  if (duration.unit === "tenure") {
     return "Coterminous with loan tenure";
   }
   
-  return maxConsentValidity;
+  return `${duration.number} ${duration.unit}${Number(duration.number) !== 1 ? 's' : ''}`;
 };
 
-// Helper function to convert frequency between different units
-export const convertFrequencyToTemplateUnit = (
-  value: number, 
-  fromUnit: string, 
-  toUnit: string
-): number => {
-  // Convert from current unit to days first
-  let valueInDays = value;
-  if (fromUnit.toLowerCase() === "month") {
-    valueInDays = value * 30; // Approximate conversion
-  } else if (fromUnit.toLowerCase() === "year") {
-    valueInDays = value * 365; // Approximate conversion
-  }
+// Get maximum values based on template
+export const getMaxValues = (
+  regulator: string,
+  purposeCode: string, 
+  usecaseCategory: string,
+  selectedFiTypes: string[] = [],
+  selectedConsentTypes: string[] = []
+) => {
+  const template = getBestMatchingTemplate(
+    regulator, 
+    purposeCode, 
+    usecaseCategory,
+    selectedFiTypes,
+    selectedConsentTypes
+  );
   
-  // Then convert from days to the target unit
-  if (toUnit.toLowerCase() === "month") {
-    return Math.ceil(valueInDays / 30); // Convert days to months
-  } else if (toUnit.toLowerCase() === "year") {
-    return Math.ceil(valueInDays / 365); // Convert days to years
-  }
-  
-  return valueInDays; // Return in days if target unit is also days
+  return {
+    maxConsentValidity: template?.maxConsentValidity ? parseDuration(template.maxConsentValidity) : null,
+    maxFrequency: template?.maxFrequency ? parseFrequency(template.maxFrequency) : null,
+    maxFiDataRange: template?.maxFiDataRange ? parseDuration(template.maxFiDataRange) : null,
+    maxDataLife: template?.maxDataLife ? parseDuration(template.maxDataLife) : null
+  };
+};
+
+// Check if a field is required
+export const isFieldRequired = (fieldName: string): boolean => {
+  const field = formFields.consentParameters?.consentParamFields?.find(f => f.id === fieldName);
+  return field?.required === true;
 };

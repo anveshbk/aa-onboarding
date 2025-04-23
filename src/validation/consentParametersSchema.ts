@@ -136,7 +136,6 @@ export const validateDuration = (
   return undefined;
 };
 
-// Frequency validation updated
 export const validateFrequencyAgainstTemplate = (
   userInput: Duration | undefined,
   templateMaxFrequency: string | undefined
@@ -146,22 +145,16 @@ export const validateFrequencyAgainstTemplate = (
   const parsedTemplate = parsePeriodString(templateMaxFrequency);
   if (!parsedTemplate || !parsedTemplate.number || !parsedTemplate.unit) return undefined;
 
-  const userInputDays = toDays(Number(userInput.number), userInput.unit);
-  const templateMaxDays = toDays(Number(parsedTemplate.number), parsedTemplate.unit);
+  // Convert both to days for comparison
+  const userInputDays = toDays(1, userInput.unit) / Number(userInput.number);
+  const templateMinDays = toDays(1, parsedTemplate.unit) / Number(parsedTemplate.number);
 
-  if (userInputDays <= templateMaxDays) return undefined;  // Valid input
+  if (userInputDays >= templateMinDays) return undefined;  // Valid input
 
-  const maxTimesPerInputUnit = Math.floor(templateMaxDays / userInputDays);
-  return `Maximum allowed is ${maxTimesPerInputUnit} times per ${userInput.unit.toLowerCase()}`;
+  return `Maximum allowed frequency is ${parsedTemplate.number} times per ${parsedTemplate.unit.toLowerCase()}`;
 };
 
-// Optional helper to format the frequency as displayable string
 export const formatFrequencyForDisplay = (duration: Duration): string => {
   if (!duration?.number || !duration?.unit) return "";
-
-  const days = toDays(Number(duration.number), duration.unit);
-  if (days === 0) return "";
-
-  const frequencyPerMonth = Math.floor(30 / days);
-  return `${frequencyPerMonth} times per ${duration.unit.toLowerCase()}`;
+  return `${duration.number} times per ${duration.unit.toLowerCase()}`;
 };

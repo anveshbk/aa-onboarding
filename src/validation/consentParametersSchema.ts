@@ -11,7 +11,7 @@ const ConsentParamItemSchema = z.object({
   purposeText: z.string().optional(),
   consentValidityPeriod: DurationSchema.optional(),
   fetchType: z.string().optional(),
-  consentType: z.array(z.enum(["Profile", "Summary", "Transaction"])).optional(),
+  consentType: z.array(z.string()).optional(),
   fiTypes: z.array(z.string()).optional(),
   dataFetchFrequency: DurationSchema.optional(),
   fiDataRange: DurationSchema.optional(),

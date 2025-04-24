@@ -353,36 +353,6 @@ export const isValidDuration = (
   return { isValid: true };
 };
 
-// NEW: Validate frequency against maximum
-export const validateFrequency = (
-  input: Duration | undefined,
-  maxFreq: Duration | null
-): { isValid: boolean; message?: string } => {
-  // If no maxFreq or input is undefined, consider it valid
-  if (!maxFreq || !input || !input.number || input.number.trim() === "") {
-    return { isValid: true };
-  }
-  
-  const inputValue = Number(input.number);
-  if (isNaN(inputValue) || inputValue <= 0) {
-    return { isValid: false, message: "Please enter a valid positive number" };
-  }
-  
-  // Convert both to "times per day" for comparison
-  const inputPerDay = inputValue / toDays(1, input.unit);
-  const maxPerDay = Number(maxFreq.number) / toDays(1, maxFreq.unit);
-  
-  if (inputPerDay > maxPerDay) {
-    // Format message in user-friendly "times per" format
-    return {
-      isValid: false,
-      message: `Maximum allowed frequency is ${maxFreq.number} times per ${maxFreq.unit.toLowerCase()}`
-    };
-  }
-  
-  return { isValid: true };
-};
-
 // Format duration for display
 export const formatDuration = (duration: Duration | null): string => {
   if (!duration) return "";

@@ -22,6 +22,8 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
     // Make sure output has correct MIME types
     rollupOptions: {
       output: {

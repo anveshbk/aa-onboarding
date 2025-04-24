@@ -19,9 +19,9 @@ import {
   getMaxValues,
   isFieldRequired,
   isValidDuration,
-  formatDuration,
-  validateFrequency
+  formatDuration 
 } from "./consentHelpers";
+import { validateFrequency } from "@/validation/consentParametersSchema";
 
 interface ConsentParamItemProps {
   index: number;

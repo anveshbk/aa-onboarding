@@ -1,4 +1,4 @@
-import { ConsentTemplate, ConsentTemplatesMap, Duration, parseFrequencyString, parsePeriodString, toDays } from "@/validation/consentParametersSchema";
+import { ConsentTemplate, ConsentTemplatesMap, Duration, parseFrequencyString, parsePeriodString, toDays, validateFrequency } from "@/validation/consentParametersSchema";
 import formFields from "@/data/formFields.json";
 
 // Define proper types for the template structures
@@ -280,7 +280,7 @@ export const parseDuration = (durationStr: string | undefined): Duration | null 
   return null;
 };
 
-// Parse frequency strings - now expecting either "X times per unit" or standard "X Unit" format
+// Parse frequency strings - properly using import
 export const parseFrequency = (frequencyStr: string | undefined): Duration | null => {
   if (!frequencyStr || frequencyStr === "NA") return null;
   

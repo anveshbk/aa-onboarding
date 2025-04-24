@@ -170,14 +170,14 @@ export const validateDuration = (
   return undefined;
 };
 
-// Frequency validation (now expects maxFreq in "X Unit" format but displays "X times per unit" in error messages)
+// Frequency validation - treats frequency like a duration internally but formats error messages as "X times per unit"
 export const validateFrequency = (
   input: Duration | undefined,
   max: Duration | null
-): string | undefined => {
-  if (!input || !max) return undefined;
-  if (!input.number || !max.number) return undefined;
-  if (isNaN(Number(input.number)) || isNaN(Number(max.number))) return undefined;
+): { isValid: boolean; message?: string } => {
+  if (!input || !max) return { isValid: true };
+  if (!input.number || !max.number) return { isValid: true };
+  if (isNaN(Number(input.number)) || isNaN(Number(max.number))) return { isValid: true };
 
   // Convert both to "times per day" for comparison
   const inputPerDay = Number(input.number) / toDays(1, input.unit);
@@ -185,9 +185,11 @@ export const validateFrequency = (
 
   if (inputPerDay > maxPerDay) {
     // Format the error message to be user-friendly
-    return `Maximum allowed frequency is ${max.number} times per ${max.unit.toLowerCase()}`;
+    return {
+      isValid: false,
+      message: `Maximum allowed frequency is ${max.number} times per ${max.unit.toLowerCase()}`
+    };
   }
 
-  return undefined;
+  return { isValid: true };
 };
-

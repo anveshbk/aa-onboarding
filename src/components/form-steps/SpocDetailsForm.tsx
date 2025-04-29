@@ -14,19 +14,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const spocTypes = [
   {
     spocType: "FIU SPOC",
-    description: "Will be in to for all FIU conversation and must be senior enough as sensitive info like keys etc will be shared"
+    description: "Will be in to for all FIU conversation and must be senior enough as sensitive info like keys etc will be shared",
+    fieldPrefix: "fiuSpoc" // Adding unique field prefix
   },
   {
     spocType: "FIU Escalation SPOC",
-    description: "Incase if there is any escalation"
+    description: "Incase if there is any escalation",
+    fieldPrefix: "fiuEscalationSpoc" // Adding unique field prefix
   },
   {
     spocType: "RBI SPOC",
-    description: "Incase RBI anytime requested to share SPOC details then this will be shared"
+    description: "Incase RBI anytime requested to share SPOC details then this will be shared",
+    fieldPrefix: "rbiSpoc" // Adding unique field prefix
   },
   {
     spocType: "Grievance SPOC",
-    description: "Incase any grievances received from end customer to AA then we will be reaching out to this SPOC"
+    description: "Incase any grievances received from end customer to AA then we will be reaching out to this SPOC",
+    fieldPrefix: "grievanceSpoc" // Adding unique field prefix
   }
 ];
 
@@ -117,7 +121,7 @@ const SpocDetailsForm = () => {
         <SpocContact
           key={spoc.spocType}
           control={control}
-          namePrefix={spoc.spocType.split(' ')[0].toLowerCase() + 'Spoc'}
+          namePrefix={spoc.fieldPrefix} // Use the dedicated field prefix
           title={spoc.spocType}
           description={spoc.description}
         />

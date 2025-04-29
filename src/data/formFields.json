@@ -1,4 +1,3 @@
-
 {
   "tspDetails": {
     "title": "TSP Details",
@@ -8,7 +7,11 @@
         "name": "Name of TSP",
         "type": "text",
         "description": "",
-        "required": false
+        "required": true,
+        "validation": {
+          "minLength": 2,
+          "maxLength": 100
+        }
       },
       {
         "id": "requestDate",
@@ -22,14 +25,17 @@
         "name": "Requested By",
         "type": "text",
         "description": "",
-        "required": false
+        "required": true
       },
       {
         "id": "tspSpocEmail",
         "name": "TSP SPOC Email",
         "type": "text",
         "description": "Will be in cc in all FIU correspondence from Onemoney as required",
-        "required": false
+        "required": true,
+        "validation": {
+          "type": "email"
+        }
       }
     ]
   },
@@ -41,7 +47,11 @@
         "name": "FIU registered name (as per license)",
         "type": "text",
         "description": "",
-        "required": false
+        "required": true,
+        "validation": {
+          "minLength": 3,
+          "maxLength": 100
+        }
       },
       {
         "id": "regulator",
@@ -49,7 +59,7 @@
         "type": "dropdown",
         "options": ["RBI", "PFRDA", "IRDAI", "SEBI"],
         "description": "",
-        "required": false
+        "required": true
       },
       {
         "id": "licenseType",
@@ -57,7 +67,7 @@
         "type": "dropdown",
         "options": [],
         "description": "",
-        "required": false,
+        "required": true,
         "dependsOn": "regulator"
       },
       {
@@ -65,7 +75,7 @@
         "name": "License copy",
         "type": "fileOrLink",
         "description": "Max 5MB",
-        "required": false,
+        "required": true,
         "validation": {
           "maxSize": 5
         }
@@ -75,28 +85,32 @@
         "name": "License No. (As per certificate)",
         "type": "text",
         "description": "",
-        "required": false
+        "required": true,
+        "validation": {
+          "pattern": "^[A-Za-z0-9-]+$",
+          "message": "License number must contain only letters, numbers and hyphens"
+        }
       },
       {
         "id": "fiuCrIdUat",
         "name": "FIU CR ID UAT",
         "type": "text",
         "description": "FIU ID as per Sahamati UAT CR",
-        "required": false
+        "required": true
       },
       {
         "id": "fiuCrIdProd",
         "name": "FIU CR ID Prod",
         "type": "text",
         "description": "FIU ID as per Sahamati Prod CR",
-        "required": false
+        "required": true
       },
       {
         "id": "agreementExecuted",
         "name": "Agreement Executed",
         "type": "toggle",
         "description": "If yes, please upload the agreement document (max 5MB)",
-        "required": false,
+        "required": true,
         "noBorder": true
       },
       {
@@ -104,9 +118,13 @@
         "name": "Agreement Document",
         "type": "fileOrLink",
         "description": "Max 5MB",
-        "required": false,
+        "required": true,
         "validation": {
           "maxSize": 5
+        },
+        "conditionalDisplay": {
+          "dependsOn": "agreementExecuted",
+          "showWhen": true
         }
       }
     ]
@@ -120,28 +138,80 @@
         "name": "FIU SPOC (Individual email)",
         "type": "contact",
         "description": "Will be in to for all FIU conversation and must be senior enough as sensitive info like keys etc will be shared",
-        "required": false
+        "required": true,
+        "validation": {
+          "name": {
+            "required": true,
+            "minLength": 2
+          },
+          "email": {
+            "required": true,
+            "type": "email"
+          },
+          "mobileNumber": {
+            "required": true,
+            "type": "phone",
+            "pattern": "^[0-9]{10}$",
+            "message": "Mobile number must be 10 digits"
+          }
+        }
       },
       {
         "id": "fiuEscalationSpoc",
         "name": "FIU Escalation SPOC (Individual email)",
         "type": "contact",
         "description": "Incase if there is any escalation",
-        "required": false
+        "required": true,
+        "validation": {
+          "name": {
+            "required": true,
+            "minLength": 2
+          },
+          "email": {
+            "required": true,
+            "type": "email"
+          },
+          "mobileNumber": {
+            "required": true,
+            "type": "phone",
+            "pattern": "^[0-9]{10}$",
+            "message": "Mobile number must be 10 digits"
+          }
+        }
       },
       {
         "id": "rbiSpoc",
         "name": "RBI SPOC (FIU)",
         "type": "contact",
         "description": "Incase RBI anytime requested to share SPOC details then this will be shared",
-        "required": false
+        "required": false,
+        "validation": {
+          "email": {
+            "type": "email"
+          },
+          "mobileNumber": {
+            "type": "phone",
+            "pattern": "^[0-9]{10}$",
+            "message": "Mobile number must be 10 digits"
+          }
+        }
       },
       {
         "id": "grievanceSpoc",
         "name": "Grievance SPOC (FIU)",
         "type": "contact",
         "description": "Incase any grievances received from end customer to AA then we will be reaching out to this SPOC",
-        "required": false
+        "required": false,
+        "validation": {
+          "email": {
+            "type": "email"
+          },
+          "mobileNumber": {
+            "type": "phone",
+            "pattern": "^[0-9]{10}$",
+            "message": "Mobile number must be 10 digits"
+          }
+        }
       }
     ]
   },
@@ -186,14 +256,14 @@
         "type": "dropdown",
         "options": ["Standard", "Custom", "Cocreated FIU", "Cocreated TSP"],
         "description": "",
-        "required": false
+        "required": true
       },
       {
         "id": "consentRequestSMS",
         "name": "Consent request SMS",
         "type": "toggle",
         "description": "If Onemoney consent request SMS is to be enabled",
-        "required": false,
+        "required": true,
         "noBorder": true
       }
     ]
@@ -217,7 +287,10 @@
         "type": "multipleInputs",
         "inputType": "url",
         "description": "FIU URL where Onemoney is redirected (if multiple urls then all must be added)",
-        "required": false
+        "required": false,
+        "validation": {
+          "type": "url"
+        }
       },
       {
         "id": "consentRequired",

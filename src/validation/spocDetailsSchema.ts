@@ -1,16 +1,19 @@
 
 import { z } from "zod";
+import formFields from "@/data/formFields.json";
+import { createFieldSchema } from "./schemaUtils";
 
-const ContactSchema = z.object({
-  name: z.string().optional(),
-  designation: z.string().optional(),
-  email: z.string().email("Please enter a valid email").optional(),
-  mobileNumber: z.string().optional(),
-});
-
+// Build the schema for each SPOC type
 export const SpocDetailsSchema = z.object({
-  fiuSpoc: ContactSchema.optional(),
-  fiuEscalationSpoc: ContactSchema.optional(),
-  rbiSpoc: ContactSchema.optional(),
-  grievanceSpoc: ContactSchema.optional(),
+  // FIU SPOC (required)
+  fiuSpoc: createFieldSchema(formFields.spocDetails.fields.find(f => f.id === "fiuSpoc")),
+  
+  // FIU Escalation SPOC (required)
+  fiuEscalationSpoc: createFieldSchema(formFields.spocDetails.fields.find(f => f.id === "fiuEscalationSpoc")),
+  
+  // RBI SPOC (optional)
+  rbiSpoc: createFieldSchema(formFields.spocDetails.fields.find(f => f.id === "rbiSpoc")),
+  
+  // Grievance SPOC (optional)
+  grievanceSpoc: createFieldSchema(formFields.spocDetails.fields.find(f => f.id === "grievanceSpoc")),
 });

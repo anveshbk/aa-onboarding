@@ -26,6 +26,7 @@ export const FileUploadArea = ({
   const [password, setPassword] = useState<string>(defaultValue?.password || "");
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropAreaRef = useRef<HTMLDivElement>(null);
 
   const handleFileChange = (selectedFile: File | null) => {
     if (!selectedFile) {
@@ -73,6 +74,37 @@ export const FileUploadArea = ({
     }
   };
 
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dropAreaRef.current) {
+      dropAreaRef.current.classList.add("border-primary");
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dropAreaRef.current) {
+      dropAreaRef.current.classList.remove("border-primary");
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (dropAreaRef.current) {
+      dropAreaRef.current.classList.remove("border-primary");
+    }
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const droppedFile = e.dataTransfer.files[0];
+      handleFileChange(droppedFile);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center">
@@ -103,7 +135,13 @@ export const FileUploadArea = ({
                   <Link className="h-4 w-4 mr-2" />
                   Link
                 </Button>
-                <div className="flex-1 border rounded-md px-4 py-2 flex items-center justify-between">
+                <div 
+                  ref={dropAreaRef}
+                  className="flex-1 border rounded-md px-4 py-2 flex items-center justify-between transition-colors"
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
                   <div className="flex items-center">
                     <Upload className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">
@@ -147,7 +185,7 @@ export const FileUploadArea = ({
         )}
       </div>
 
-      {error && <p className="error-text">{error}</p>}
+      {error && <p className="text-destructive text-sm">{error}</p>}
 
       {url && activeTab === "link" && (
         <div className="flex space-x-2">
@@ -161,7 +199,7 @@ export const FileUploadArea = ({
       )}
 
       {file && activeTab === "file" && (
-        <div className="file-preview">
+        <div className="file-preview border rounded-md p-2 flex items-center gap-2">
           <File className="h-4 w-4 text-primary" />
           <span className="flex-1 truncate">{file.name}</span>
           <Button

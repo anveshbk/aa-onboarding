@@ -34,9 +34,11 @@ const FormWizard = () => {
   const [formData, setFormData] = useState<any>({});
   const [showCocreatedDevelopment, setShowCocreatedDevelopment] = useState(false);
   
-  // Make all schemas optional for testing purposes
+  // Fix: Use the correct method to make schemas optional for testing
+  // All schema fields are already optional in their respective schema files
   const makeSchemaOptional = (schema: any) => {
-    return schema.partial();
+    // Return the schema as is, since fields are already optional
+    return schema;
   };
   
   // Create steps dynamically, excluding conditional steps initially

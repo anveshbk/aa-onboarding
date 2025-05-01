@@ -23,14 +23,14 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep, onSte
         {steps.map((step, index) => (
           <TimelineItem 
             key={index} 
-            step={index + 1}
+            step={index}
             onClick={() => onStepClick && onStepClick(index)}
           >
             <TimelineHeader>
               <TimelineIndicator>{index + 1}</TimelineIndicator>
               <TimelineTitle>{step}</TimelineTitle>
-              <TimelineSeparator />
             </TimelineHeader>
+            <TimelineSeparator />
           </TimelineItem>
         ))}
       </Timeline>

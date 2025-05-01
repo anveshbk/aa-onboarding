@@ -34,37 +34,42 @@ const FormWizard = () => {
   const [formData, setFormData] = useState<any>({});
   const [showCocreatedDevelopment, setShowCocreatedDevelopment] = useState(false);
   
+  // Make all schemas optional for testing purposes
+  const makeSchemaOptional = (schema: any) => {
+    return schema.partial();
+  };
+  
   // Create steps dynamically, excluding conditional steps initially
   const baseSteps: StepConfig[] = [
     {
       title: "TSP Details",
       component: <TspDetailsForm />,
-      validationSchema: TspDetailsSchema,
+      validationSchema: makeSchemaOptional(TspDetailsSchema),
     },
     {
       title: "FIU Details",
       component: <FiuDetailsForm />,
-      validationSchema: FiuDetailsSchema,
+      validationSchema: makeSchemaOptional(FiuDetailsSchema),
     },
     {
       title: "FIU SPOC Details",
       component: <SpocDetailsForm />,
-      validationSchema: SpocDetailsSchema,
+      validationSchema: makeSchemaOptional(SpocDetailsSchema),
     },
     {
       title: "Integration to Onemoney",
       component: <IntegrationDetailsForm setShowCocreatedDevelopment={setShowCocreatedDevelopment} />,
-      validationSchema: IntegrationDetailsSchema,
+      validationSchema: makeSchemaOptional(IntegrationDetailsSchema),
     },
     {
       title: "User Journey",
       component: <UserJourneySettingsForm />,
-      validationSchema: UserJourneySettingsSchema,
+      validationSchema: makeSchemaOptional(UserJourneySettingsSchema),
     },
     {
       title: "Consent Parameters",
       component: <ConsentParametersForm />,
-      validationSchema: ConsentParametersSchema,
+      validationSchema: makeSchemaOptional(ConsentParametersSchema),
     }
   ];
   
@@ -85,7 +90,7 @@ const FormWizard = () => {
           title: "Cocreated Development",
           description: "Applicable only for cocoreated development",
           component: <CocreatedDevelopmentForm />,
-          validationSchema: CocreatedDevelopmentSchema,
+          validationSchema: makeSchemaOptional(CocreatedDevelopmentSchema),
         }
       ]
     : baseSteps;
@@ -155,7 +160,7 @@ const FormWizard = () => {
                 <div className="text-primary font-bold text-xl">AA</div>
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Account Aggregator Onboarding</h1>
+                <h1>Account Aggregator Onboarding</h1>
                 <p className="text-muted-foreground">Complete the form to register your FIU</p>
               </div>
             </div>

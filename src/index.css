@@ -73,9 +73,35 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
   
+  /* Consistent typography for the whole app */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-medium tracking-tight text-foreground;
+  }
+  
+  h1 {
+    @apply text-2xl font-bold mb-4;
+  }
+  
+  h2 {
+    @apply text-xl font-semibold mb-3;
+  }
+  
+  h3 {
+    @apply text-lg font-medium mb-2;
+  }
+  
+  p {
+    @apply text-sm text-muted-foreground mb-4;
+  }
+  
+  label {
+    @apply font-medium text-sm;
+  }
+  
+  /* Form specific styling */
   .onemoney-form h1 {
     @apply text-2xl font-bold tracking-tight mb-4;
   }
@@ -114,6 +140,7 @@
 }
 
 @layer components {
+  /* Step indicator and timeline styling */
   .step-indicator {
     @apply w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border;
   }
@@ -138,6 +165,7 @@
     @apply bg-primary;
   }
 
+  /* File upload styling */
   .file-input-wrapper {
     @apply relative border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center;
   }

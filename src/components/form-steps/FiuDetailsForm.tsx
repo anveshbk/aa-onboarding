@@ -36,7 +36,7 @@ const FiuDetailsForm = () => {
   
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">FIU Details</h2>
+      <h2>FIU Details</h2>
       
       {/* FIU Registered Name */}
       <FormField
@@ -120,7 +120,6 @@ const FiuDetailsForm = () => {
                 placeholder="Insert license copy Drive link"
               />
             </FormControl>
-            <FormDescription>Max 5MB</FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -181,7 +180,7 @@ const FiuDetailsForm = () => {
             <div className="space-y-0.5 mb-2">
               <FormLabel className="text-base">Agreement Executed</FormLabel>
               <FormDescription>
-                If yes, please upload the agreement document (max 5MB)
+                If yes, please upload the agreement document
               </FormDescription>
             </div>
             <FormControl>
@@ -216,7 +215,6 @@ const FiuDetailsForm = () => {
                   placeholder="Insert agreement document Drive link"
                 />
               </FormControl>
-              <FormDescription>Max 5MB</FormDescription>
               <FormMessage />
             </FormItem>
           )}

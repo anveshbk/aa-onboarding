@@ -9,8 +9,6 @@ const createFieldSchema = (field: any) => {
   // Apply required validation if specified
   if (field.required) {
     schema = schema.min(1, { message: `${field.name} is required` });
-  } else {
-    schema = schema.optional();
   }
   
   // Apply additional validations if specified
@@ -48,7 +46,8 @@ const createFieldSchema = (field: any) => {
     }
   }
   
-  return schema;
+  // Make field optional after applying all validations if not required
+  return field.required ? schema : schema.optional();
 };
 
 // Build the schema dynamically from the JSON config

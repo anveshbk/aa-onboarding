@@ -3,6 +3,10 @@ import { z } from "zod";
 
 // Function to create dynamic validation schema based on JSON config
 export const createFieldSchema = (field: any) => {
+  if (!field) {
+    return z.any().optional();
+  }
+
   if (field.type === "contact") {
     // Handle contact type fields (with nested fields)
     return createContactSchema(field);
@@ -50,8 +54,6 @@ export const createFieldSchema = (field: any) => {
   // Apply required validation if specified
   if (field.required) {
     schema = schema.min(1, { message: `${field.name} is required` });
-  } else {
-    schema = schema.optional();
   }
   
   // Apply additional validations if specified
@@ -89,7 +91,8 @@ export const createFieldSchema = (field: any) => {
     }
   }
   
-  return schema;
+  // Make field optional after applying all validations if not required
+  return field.required ? schema : schema.optional();
 };
 
 // Helper for contact type fields with nested validation
@@ -105,71 +108,45 @@ const createContactSchema = (field: any) => {
   };
   
   // Name validation
-  if (validationRules.name) {
-    let nameSchema = z.string();
-    if (validationRules.name.required) {
-      nameSchema = nameSchema.min(1, { message: "Name is required" });
-    } else {
-      nameSchema = nameSchema.optional();
-    }
-    if (validationRules.name.minLength) {
-      nameSchema = nameSchema.min(validationRules.name.minLength, {
-        message: `Name must be at least ${validationRules.name.minLength} characters`
-      });
-    }
-    contactSchema.name = nameSchema;
-  } else {
-    contactSchema.name = field.required ? z.string().min(1) : z.string().optional();
+  let nameSchema = z.string();
+  if (validationRules.name?.required) {
+    nameSchema = nameSchema.min(1, { message: "Name is required" });
   }
+  if (validationRules.name?.minLength) {
+    nameSchema = nameSchema.min(validationRules.name.minLength, {
+      message: `Name must be at least ${validationRules.name.minLength} characters`
+    });
+  }
+  contactSchema.name = validationRules.name?.required ? nameSchema : nameSchema.optional();
   
   // Email validation
-  if (validationRules.email) {
-    let emailSchema = z.string();
-    if (validationRules.email.required) {
-      emailSchema = emailSchema.min(1, { message: "Email is required" });
-    } else {
-      emailSchema = emailSchema.optional();
-    }
-    if (validationRules.email.type === "email") {
-      emailSchema = emailSchema.email({ message: "Please enter a valid email address" });
-    }
-    contactSchema.email = emailSchema;
-  } else {
-    contactSchema.email = field.required ? z.string().email() : z.string().email().optional();
+  let emailSchema = z.string();
+  if (validationRules.email?.required) {
+    emailSchema = emailSchema.min(1, { message: "Email is required" });
   }
+  if (validationRules.email?.type === "email") {
+    emailSchema = emailSchema.email({ message: "Please enter a valid email address" });
+  }
+  contactSchema.email = validationRules.email?.required ? emailSchema : emailSchema.optional();
   
   // Mobile number validation
-  if (validationRules.mobileNumber) {
-    let mobileSchema = z.string();
-    if (validationRules.mobileNumber.required) {
-      mobileSchema = mobileSchema.min(1, { message: "Mobile number is required" });
-    } else {
-      mobileSchema = mobileSchema.optional();
-    }
-    if (validationRules.mobileNumber.pattern) {
-      mobileSchema = mobileSchema.regex(new RegExp(validationRules.mobileNumber.pattern), {
-        message: validationRules.mobileNumber.message || "Please enter a valid mobile number"
-      });
-    }
-    contactSchema.mobileNumber = mobileSchema;
-  } else {
-    contactSchema.mobileNumber = field.required ? 
-      z.string().min(1, { message: "Mobile number is required" }) : 
-      z.string().optional();
+  let mobileSchema = z.string();
+  if (validationRules.mobileNumber?.required) {
+    mobileSchema = mobileSchema.min(1, { message: "Mobile number is required" });
   }
+  if (validationRules.mobileNumber?.pattern) {
+    mobileSchema = mobileSchema.regex(new RegExp(validationRules.mobileNumber.pattern), {
+      message: validationRules.mobileNumber.message || "Please enter a valid mobile number"
+    });
+  }
+  contactSchema.mobileNumber = validationRules.mobileNumber?.required ? mobileSchema : mobileSchema.optional();
   
   // Designation validation
-  if (validationRules.designation) {
-    let designationSchema = z.string();
-    if (validationRules.designation.required) {
-      designationSchema = designationSchema.min(1, { message: "Designation is required" });
-    } else {
-      designationSchema = designationSchema.optional();
-    }
-    contactSchema.designation = designationSchema;
-  } else {
-    contactSchema.designation = field.required ? z.string().min(1) : z.string().optional();
+  let designationSchema = z.string();
+  if (validationRules.designation?.required) {
+    designationSchema = designationSchema.min(1, { message: "Designation is required" });
   }
+  contactSchema.designation = validationRules.designation?.required ? designationSchema : designationSchema.optional();
   
   return z.object(contactSchema);
 };

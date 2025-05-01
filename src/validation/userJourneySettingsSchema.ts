@@ -1,11 +1,6 @@
 
 import { z } from "zod";
 
-const durationSchema = z.object({
-  number: z.string().optional(),
-  unit: z.string().optional(),
-}).optional();
-
 export const UserJourneySettingsSchema = z.object({
   userJourneyVideo: z.any().optional(),
   userJourneyVideoPassword: z.string().optional(),

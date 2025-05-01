@@ -8,6 +8,7 @@ const TimelineContext = React.createContext<{
   value?: number
   onChange?: (value: number) => void
   orientation: "horizontal" | "vertical"
+  children?: React.ReactNode
 }>({
   orientation: "horizontal",
 })
@@ -20,7 +21,7 @@ const Timeline = React.forwardRef<
     onChange?: (value: number) => void
     orientation?: "horizontal" | "vertical"
   }
->(({ className, defaultValue, value, onChange, orientation = "horizontal", ...props }, ref) => {
+>(({ className, defaultValue, value, onChange, orientation = "horizontal", children, ...props }, ref) => {
   const [localValue, setLocalValue] = React.useState(defaultValue || 0)
   const val = value !== undefined ? value : localValue
 
@@ -38,6 +39,7 @@ const Timeline = React.forwardRef<
         value: val,
         onChange: handleChange,
         orientation,
+        children,
       }}
     >
       <div
@@ -171,8 +173,7 @@ const TimelineSeparator = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
-  const { value, orientation } = React.useContext(TimelineContext)
-  const { children } = React.useContext(TimelineContext)
+  const { value, orientation, children } = React.useContext(TimelineContext)
   const parentStep = React.useContext(TimelineItemContext)
   const isActive = value !== undefined && parentStep <= value
   const isLast = React.Children.count(children) === parentStep

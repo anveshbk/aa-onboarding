@@ -33,6 +33,7 @@ const IntegrationDetailsForm = ({ setShowCocreatedDevelopment }: IntegrationDeta
   const { control, watch, setValue } = useFormContext();
   const integrationType = formFields.integrationDetails.fields[0].options;
   const integrationMode = watch("integrationMode");
+  const isStandardMode = integrationMode === "Standard";
   
   // URLs and SDK Versions state
   const [webRedirectionUrls, setWebRedirectionUrls] = useState<string[]>([""]);
@@ -266,6 +267,131 @@ const IntegrationDetailsForm = ({ setShowCocreatedDevelopment }: IntegrationDeta
           </FormItem>
         )}
       />
+      
+      {/* Standard Mode specific fields */}
+      {isStandardMode && (
+        <div className="space-y-4 border rounded-md p-4 bg-muted/20">
+          <h3 className="text-md font-medium">Branding Options</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={control}
+              name="primaryColor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Primary Color</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="color"
+                        {...field}
+                        className="h-10 w-10 p-1 cursor-pointer"
+                      />
+                      <Input
+                        type="text"
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        placeholder="#000000"
+                        className="flex-1"
+                      />
+                    </div>
+                  </FormControl>
+                  <FormDescription>
+                    Primary brand color for UI elements
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={control}
+              name="secondaryColor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Secondary Color</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="color"
+                        {...field}
+                        className="h-10 w-10 p-1 cursor-pointer"
+                      />
+                      <Input
+                        type="text"
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        placeholder="#000000"
+                        className="flex-1"
+                      />
+                    </div>
+                  </FormControl>
+                  <FormDescription>
+                    Secondary brand color for UI accents
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={control}
+              name="primaryFont"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Primary Font</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a font" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {formFields.integrationDetails.fields.find(f => f.id === "primaryFont")?.options?.map((font) => (
+                        <SelectItem key={font} value={font}>
+                          {font}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Primary font for headers
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={control}
+              name="secondaryFont"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Secondary Font</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a font" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {formFields.integrationDetails.fields.find(f => f.id === "secondaryFont")?.options?.map((font) => (
+                        <SelectItem key={font} value={font}>
+                          {font}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Secondary font for body text
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+      )}
       
       <FormField
         control={control}

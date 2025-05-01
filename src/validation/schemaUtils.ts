@@ -47,6 +47,16 @@ export const createFieldSchema = (field: any) => {
       ? z.string().min(1, { message: `${field.name} is required` })
       : z.string().optional();
   }
+
+  if (field.type === "color") {
+    // Handle color fields
+    let schema = z.string();
+    if (field.required) {
+      schema = schema.min(1, { message: `${field.name} is required` });
+    }
+    // Add regex for hex color validation if needed
+    return field.required ? schema : schema.optional();
+  }
   
   // Default case for text fields
   let schema = z.string();
@@ -153,16 +163,19 @@ const createContactSchema = (field: any) => {
 
 // Helper for file or link type fields
 const createFileOrLinkSchema = (field: any) => {
-  return z.object({
-    file: z.any().optional(),
-    url: z.string().optional(),
-    password: z.string().optional(),
-  }).refine(data => {
+  const refinement = (data: any) => {
     if (field.required) {
       return !!(data.file || data.url);
     }
     return true;
-  }, {
+  };
+  
+  // Create schema with file type validation
+  return z.object({
+    file: z.any().optional(),
+    url: z.string().optional(),
+    password: z.string().optional(),
+  }).refine(refinement, {
     message: `${field.name} is required. Please provide a file or link.`,
     path: ["file"]
   });

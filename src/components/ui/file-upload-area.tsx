@@ -45,7 +45,7 @@ export const FileUploadArea = ({
     if (acceptedFileTypes && acceptedFileTypes.length > 0) {
       const fileType = selectedFile.type;
       if (!acceptedFileTypes.includes(fileType)) {
-        setError(`Only ${acceptedFileTypes.join(', ')} files are allowed`);
+        setError(`Only ${acceptedFileTypes.map(type => type.split('/')[1]).join(', ')} files are allowed`);
         return;
       }
     }
@@ -72,6 +72,16 @@ export const FileUploadArea = ({
     if (inputRef.current) {
       inputRef.current.value = '';
     }
+  };
+
+  // Format accepted file types for display
+  const formatAcceptedFileTypes = () => {
+    if (!acceptedFileTypes || acceptedFileTypes.length === 0) return "";
+    
+    return acceptedFileTypes.map(type => {
+      const parts = type.split('/');
+      return parts[1] === '*' ? parts[0] : parts[1].toUpperCase();
+    }).join(', ');
   };
 
   // Drag and drop handlers
@@ -166,6 +176,8 @@ export const FileUploadArea = ({
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mt-1 ml-[76px]">
+                {acceptedFileTypes && acceptedFileTypes.length > 0 ? 
+                  `Accepted file types: ${formatAcceptedFileTypes()}. ` : ''}
                 File size limit: {maxSize}MB
               </p>
             </div>

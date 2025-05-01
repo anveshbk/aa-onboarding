@@ -1,3 +1,4 @@
+
 {
   "tspDetails": {
     "title": "TSP Details",
@@ -77,7 +78,8 @@
         "description": "Max 5MB",
         "required": true,
         "validation": {
-          "maxSize": 5
+          "maxSize": 5,
+          "acceptedFileTypes": ["application/pdf", "image/jpeg", "image/png"]
         }
       },
       {
@@ -120,7 +122,8 @@
         "description": "Max 5MB",
         "required": true,
         "validation": {
-          "maxSize": 5
+          "maxSize": 5,
+          "acceptedFileTypes": ["application/pdf", "image/jpeg", "image/png"]
         },
         "conditionalDisplay": {
           "dependsOn": "agreementExecuted",
@@ -259,6 +262,52 @@
         "required": true
       },
       {
+        "id": "primaryColor",
+        "name": "Primary Color",
+        "type": "color",
+        "description": "Primary brand color for UI elements",
+        "required": false,
+        "conditionalDisplay": {
+          "dependsOn": "integrationMode",
+          "showWhen": "Standard"
+        }
+      },
+      {
+        "id": "secondaryColor",
+        "name": "Secondary Color",
+        "type": "color",
+        "description": "Secondary brand color for UI elements",
+        "required": false,
+        "conditionalDisplay": {
+          "dependsOn": "integrationMode",
+          "showWhen": "Standard"
+        }
+      },
+      {
+        "id": "primaryFont",
+        "name": "Primary Font",
+        "type": "dropdown",
+        "options": ["Arial", "Helvetica", "Open Sans", "Roboto", "Montserrat", "Poppins"],
+        "description": "Primary font for headers",
+        "required": false,
+        "conditionalDisplay": {
+          "dependsOn": "integrationMode",
+          "showWhen": "Standard"
+        }
+      },
+      {
+        "id": "secondaryFont",
+        "name": "Secondary Font",
+        "type": "dropdown",
+        "options": ["Arial", "Helvetica", "Open Sans", "Roboto", "Montserrat", "Poppins"],
+        "description": "Secondary font for body text",
+        "required": false,
+        "conditionalDisplay": {
+          "dependsOn": "integrationMode",
+          "showWhen": "Standard"
+        }
+      },
+      {
         "id": "consentRequestSMS",
         "name": "Consent request SMS",
         "type": "toggle",
@@ -278,7 +327,8 @@
         "description": "File upload max 5MB, if link then we should ask for password",
         "required": false,
         "validation": {
-          "maxSize": 5
+          "maxSize": 5,
+          "acceptedFileTypes": ["video/mp4", "video/webm"]
         }
       },
       {

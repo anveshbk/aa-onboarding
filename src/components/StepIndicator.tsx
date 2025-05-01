@@ -13,26 +13,22 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep, onSte
   
   return (
     <div className="w-full py-6 space-y-6">
-      <div className="flex items-center justify-center w-full mb-2">
-        <div className="w-full max-w-3xl">
+      <div className="flex items-center justify-center w-full mb-4">
+        <div className="w-full max-w-4xl">
           <Progress value={progressPercentage} className="h-1.5" />
         </div>
       </div>
       
       <div className="flex items-center justify-center w-full">
-        <div className="w-full max-w-3xl flex">
+        <div className="w-full max-w-4xl flex justify-between">
           {steps.map((step, index) => (
             <div 
               key={`step-${index}`} 
-              className={`flex flex-col items-center cursor-pointer ${
-                index === 0 ? 'justify-start' : 
-                index === steps.length - 1 ? 'justify-end ml-auto' : 
-                'justify-center flex-1'
-              }`}
+              className="flex flex-col items-center cursor-pointer"
               onClick={() => onStepClick && onStepClick(index)}
             >
               <div 
-                className={`flex items-center justify-center w-7 h-7 rounded-full border-2 mb-2 ${
+                className={`flex items-center justify-center w-8 h-8 rounded-full border-2 mb-2 ${
                   index <= currentStep 
                     ? "bg-primary border-primary" 
                     : "bg-white border-gray-300"
@@ -43,7 +39,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep, onSte
                 )}
               </div>
               <span 
-                className={`text-sm ${
+                className={`text-sm text-center ${
                   index <= currentStep ? "text-primary font-medium" : "text-muted-foreground"
                 }`}
               >

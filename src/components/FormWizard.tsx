@@ -12,14 +12,6 @@ import IntegrationDetailsForm from "@/components/form-steps/IntegrationDetailsFo
 import UserJourneySettingsForm from "@/components/form-steps/UserJourneySettingsForm";
 import ConsentParametersForm from "@/components/form-steps/ConsentParametersForm";
 import CocreatedDevelopmentForm from "@/components/form-steps/CocreatedDevelopmentForm";
-import formFields from "@/data/formFields.json";
-import { TspDetailsSchema } from "@/validation/tspDetailsSchema";
-import { FiuDetailsSchema } from "@/validation/fiuDetailsSchema";
-import { SpocDetailsSchema } from "@/validation/spocDetailsSchema";
-import { IntegrationDetailsSchema } from "@/validation/integrationDetailsSchema";
-import { UserJourneySettingsSchema } from "@/validation/userJourneySettingsSchema";
-import { ConsentParametersSchema } from "@/validation/consentParametersSchema";
-import { CocreatedDevelopmentSchema } from "@/validation/cocreatedDevelopmentSchema";
 import Logo from "@/components/Logo";
 import appConfig from "@/config/appConfig.json";
 
@@ -171,10 +163,10 @@ const FormWizard = () => {
       <Card className="mb-8">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center">
-              <Logo />
+            <div className="flex items-center gap-3">
+              <Logo showText={false} />
               <div>
-                <h1>{appConfig.onboarding.title}</h1>
+                <h1 className="text-xl font-bold">{appConfig.onboarding.title}</h1>
                 <p className="text-muted-foreground">{appConfig.onboarding.subtitle}</p>
               </div>
             </div>

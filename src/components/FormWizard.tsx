@@ -34,7 +34,6 @@ const FormWizard = () => {
   const [formData, setFormData] = useState<any>({});
   const [showCocreatedDevelopment, setShowCocreatedDevelopment] = useState(false);
   
-  // Fix: Use the correct method to make schemas optional for testing
   // All schema fields are already optional in their respective schema files
   const makeSchemaOptional = (schema: any) => {
     // Return the schema as is, since fields are already optional
@@ -147,8 +146,23 @@ const FormWizard = () => {
     const completeFormData = { ...formData, ...methods.getValues() };
     console.log("Form Submitted:", completeFormData);
     
-    // Here you would typically send the data to your API
-    alert("Onboarding form submitted successfully!");
+    // Download the form data as a JSON file
+    const dataStr = JSON.stringify(completeFormData, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "onboarding_form_data.json";
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    // Show success message
+    alert("Onboarding form submitted successfully! The data has been downloaded as a JSON file.");
   };
 
   return (

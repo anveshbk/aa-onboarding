@@ -1,0 +1,14 @@
+
+{
+  "general": {
+    "appName": "Account Aggregator Dashboard",
+    "loginTitle": "Login to Account Aggregator",
+    "loginSubtitle": "Enter your credentials to access the dashboard",
+    "dashboardTitle": "Account Aggregator Dashboard",
+    "dashboardSubtitle": "Manage your Account Aggregator onboarding requests"
+  },
+  "onboarding": {
+    "title": "Account Aggregator Onboarding",
+    "subtitle": "Complete the form to register your FIU"
+  }
+}

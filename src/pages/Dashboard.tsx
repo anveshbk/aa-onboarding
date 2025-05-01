@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import OnboardingList from "@/components/OnboardingList";
+import Logo from "@/components/Logo";
+import appConfig from "@/config/appConfig.json";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -31,10 +33,8 @@ const Dashboard = () => {
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <div className="w-10 h-10 mr-3 rounded-md bg-primary/10 flex items-center justify-center">
-              <div className="text-primary font-bold text-lg">AA</div>
-            </div>
-            <h1 className="text-xl font-bold">Account Aggregator Dashboard</h1>
+            <Logo />
+            <h1 className="text-xl font-bold">{appConfig.general.dashboardTitle}</h1>
           </div>
           <Button variant="outline" onClick={handleLogout}>Logout</Button>
         </div>
@@ -46,7 +46,7 @@ const Dashboard = () => {
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-xl font-semibold">Welcome to Onemoney!</h2>
-                <p className="text-muted-foreground">Manage your Account Aggregator onboarding requests</p>
+                <p className="text-muted-foreground">{appConfig.general.dashboardSubtitle}</p>
               </div>
               <Button onClick={handleStartNewOnboarding}>
                 Onboard New FIU

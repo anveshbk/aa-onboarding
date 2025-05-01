@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +20,8 @@ import { IntegrationDetailsSchema } from "@/validation/integrationDetailsSchema"
 import { UserJourneySettingsSchema } from "@/validation/userJourneySettingsSchema";
 import { ConsentParametersSchema } from "@/validation/consentParametersSchema";
 import { CocreatedDevelopmentSchema } from "@/validation/cocreatedDevelopmentSchema";
+import Logo from "@/components/Logo";
+import appConfig from "@/config/appConfig.json";
 
 type StepConfig = {
   title: string;
@@ -171,13 +172,10 @@ const FormWizard = () => {
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
-              <div className="w-12 h-12 mr-4 rounded-md bg-primary/10 flex items-center justify-center">
-                {/* Logo placeholder - replace with actual logo */}
-                <div className="text-primary font-bold text-xl">AA</div>
-              </div>
+              <Logo />
               <div>
-                <h1>Account Aggregator Onboarding</h1>
-                <p className="text-muted-foreground">Complete the form to register your FIU</p>
+                <h1>{appConfig.onboarding.title}</h1>
+                <p className="text-muted-foreground">{appConfig.onboarding.subtitle}</p>
               </div>
             </div>
           </div>

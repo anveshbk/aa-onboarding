@@ -1,14 +1,6 @@
 
 import React from "react";
-import {
-  Timeline,
-  TimelineContent,
-  TimelineHeader,
-  TimelineIndicator,
-  TimelineItem,
-  TimelineSeparator,
-  TimelineTitle,
-} from "@/components/ui/timeline";
+import { Progress } from "@/components/ui/progress";
 
 interface StepIndicatorProps {
   steps: string[];
@@ -17,23 +9,26 @@ interface StepIndicatorProps {
 }
 
 const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep, onStepClick }) => {
+  // Calculate progress percentage
+  const progressPercentage = ((currentStep) / (steps.length - 1)) * 100;
+  
   return (
-    <div className="w-full py-4">
-      <Timeline defaultValue={currentStep} orientation="horizontal">
+    <div className="w-full py-4 space-y-2">
+      <Progress value={progressPercentage} className="h-2" />
+      
+      <div className="flex justify-between">
         {steps.map((step, index) => (
-          <TimelineItem 
-            key={index} 
-            step={index}
+          <div 
+            key={index}
+            className={`text-xs cursor-pointer ${
+              index <= currentStep ? "text-primary font-medium" : "text-muted-foreground"
+            }`}
             onClick={() => onStepClick && onStepClick(index)}
           >
-            <TimelineHeader>
-              <TimelineIndicator>{index + 1}</TimelineIndicator>
-              <TimelineTitle>{step}</TimelineTitle>
-            </TimelineHeader>
-            <TimelineSeparator />
-          </TimelineItem>
+            {step}
+          </div>
         ))}
-      </Timeline>
+      </div>
     </div>
   );
 };

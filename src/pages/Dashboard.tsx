@@ -33,7 +33,7 @@ const Dashboard = () => {
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <Logo />
+            <Logo showText={false} />
             <h1 className="text-xl font-bold ml-2">{appConfig.general.dashboardTitle}</h1>
           </div>
           <Button variant="outline" onClick={handleLogout}>Logout</Button>

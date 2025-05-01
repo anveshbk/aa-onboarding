@@ -49,14 +49,6 @@ const LoginForm = () => {
 
   return (
     <Card className="w-full max-w-md mx-auto p-6">
-      <div className="text-center mb-8">
-        <div className="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center mx-auto mb-4">
-          <div className="text-primary font-bold text-xl">AA</div>
-        </div>
-        <h1 className="text-2xl font-bold">Log in to Account Aggregator</h1>
-        <p className="text-muted-foreground">Enter your credentials to access your account</p>
-      </div>
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField

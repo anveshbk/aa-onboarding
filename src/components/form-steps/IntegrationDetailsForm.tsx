@@ -20,7 +20,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Check, Plus, Trash } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ToggleButtonGroup } from "@/components/ui/toggle-button-group";
 import { cn } from "@/lib/utils";
 import formFields from "@/data/formFields.json";
@@ -134,23 +134,21 @@ const IntegrationDetailsForm = ({ setShowCocreatedDevelopment }: IntegrationDeta
                                 
                                 <div className="flex items-center">
                                   {index === webRedirectionUrls.length - 1 ? (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={addWebRedirectionUrl}
-                                          >
-                                            <Plus className="h-4 w-4" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>Add URL</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="icon"
+                                          onClick={addWebRedirectionUrl}
+                                        >
+                                          <Plus className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Add URL</p>
+                                      </TooltipContent>
+                                    </Tooltip>
                                   ) : (
                                     <Button
                                       type="button"
@@ -180,23 +178,21 @@ const IntegrationDetailsForm = ({ setShowCocreatedDevelopment }: IntegrationDeta
                                 
                                 <div className="flex items-center">
                                   {index === sdkVersions.length - 1 ? (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={addSdkVersion}
-                                          >
-                                            <Plus className="h-4 w-4" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>Add SDK Version</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="icon"
+                                          onClick={addSdkVersion}
+                                        >
+                                          <Plus className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Add SDK Version</p>
+                                      </TooltipContent>
+                                    </Tooltip>
                                   ) : (
                                     <Button
                                       type="button"

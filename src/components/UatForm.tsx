@@ -1,4 +1,3 @@
-
 import { useFormContext, Controller } from "react-hook-form";
 import { 
   FormField,
@@ -112,23 +111,23 @@ const UatForm = () => {
           )}
         />
 
-        {/* FIU Registered Email */}
+        {/* FIU Registered Name - Changed from Email to Name */}
         <FormField
           control={control}
-          name="fiuRegisteredEmail"
+          name="fiuRegisteredName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>FIU Registered Email</FormLabel>
+              <FormLabel>FIU Registered Name</FormLabel>
               <FormControl>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                    <Mail className="h-4 w-4" />
+                    <User className="h-4 w-4" />
                   </span>
                   <Input
                     {...field}
-                    type="email"
+                    type="text"
                     className="pl-10"
-                    placeholder="Enter FIU registered email"
+                    placeholder="Enter FIU registered name"
                   />
                 </div>
               </FormControl>

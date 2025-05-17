@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,6 +23,7 @@ import { ConsentParametersSchema } from "@/validation/consentParametersSchema";
 import { CocreatedDevelopmentSchema } from "@/validation/cocreatedDevelopmentSchema";
 import Logo from "@/components/Logo";
 import appConfig from "@/config/appConfig.json";
+import { toast } from "sonner";
 
 type StepConfig = {
   title: string;
@@ -31,6 +33,7 @@ type StepConfig = {
 };
 
 const FormWizard = () => {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<any>({});
   const [showCocreatedDevelopment, setShowCocreatedDevelopment] = useState(false);
@@ -97,53 +100,8 @@ const FormWizard = () => {
       ]
     : baseSteps;
 
-  const currentValidationSchema = steps[currentStep].validationSchema;
-  const methods = useForm({
-    resolver: zodResolver(currentValidationSchema),
-    mode: "onChange",
-    defaultValues: formData,
-  });
-
-  useEffect(() => {
-    methods.reset(formData);
-  }, [currentStep, formData, methods]);
-
-  const handleNext = async () => {
-    const isValid = await methods.trigger();
-    
-    if (isValid) {
-      const currentData = methods.getValues();
-      setFormData({ ...formData, ...currentData });
-      
-      if (currentStep < steps.length - 1) {
-        setCurrentStep(currentStep + 1);
-        window.scrollTo(0, 0);
-      } else {
-        handleSubmit();
-      }
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      const currentData = methods.getValues();
-      setFormData({ ...formData, ...currentData });
-      setCurrentStep(currentStep - 1);
-      window.scrollTo(0, 0);
-    }
-  };
-
-  const handleStepClick = async (stepIndex: number) => {
-    // Save current form data before navigation
-    const currentData = methods.getValues();
-    setFormData({ ...formData, ...currentData });
-    
-    // Navigate to the selected step
-    setCurrentStep(stepIndex);
-    window.scrollTo(0, 0);
-  };
-
-  const handleSubmit = () => {
+  const onSubmitAllSteps = () => {
+    // Final form data with all steps combined
     const completeFormData = { 
       ...formData, 
       ...methods.getValues(),
@@ -167,8 +125,55 @@ const FormWizard = () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    // Show success message
-    alert("Onboarding form submitted successfully! The data has been downloaded as a JSON file.");
+    // Show success message and navigate to dashboard
+    toast.success("Onboarding form submitted successfully!");
+    navigate("/dashboard");
+  };
+
+  const currentValidationSchema = steps[currentStep].validationSchema;
+  const methods = useForm({
+    resolver: zodResolver(currentValidationSchema),
+    mode: "onChange",
+    defaultValues: formData,
+  });
+
+  useEffect(() => {
+    methods.reset(formData);
+  }, [currentStep, formData, methods]);
+
+  const handleNext = async () => {
+    const isValid = await methods.trigger();
+    
+    if (isValid) {
+      const currentData = methods.getValues();
+      setFormData({ ...formData, ...currentData });
+      
+      if (currentStep < steps.length - 1) {
+        setCurrentStep(currentStep + 1);
+        window.scrollTo(0, 0);
+      } else {
+        onSubmitAllSteps();
+      }
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      const currentData = methods.getValues();
+      setFormData({ ...formData, ...currentData });
+      setCurrentStep(currentStep - 1);
+      window.scrollTo(0, 0);
+    }
+  };
+
+  const handleStepClick = async (stepIndex: number) => {
+    // Save current form data before navigation
+    const currentData = methods.getValues();
+    setFormData({ ...formData, ...currentData });
+    
+    // Navigate to the selected step
+    setCurrentStep(stepIndex);
+    window.scrollTo(0, 0);
   };
 
   return (

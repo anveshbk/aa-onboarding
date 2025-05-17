@@ -22,7 +22,6 @@ const formSchema = z.object({
   secondaryColor: z.string().optional(),
   primaryFont: z.string().optional(),
   secondaryFont: z.string().optional(),
-  fiuLogoVisible: z.boolean().optional(),
   fiuLogo: z.any().optional(),
 });
 
@@ -46,7 +45,6 @@ const UatFormWizard = () => {
       secondaryColor: "",
       primaryFont: "",
       secondaryFont: "",
-      fiuLogoVisible: false,
     },
   });
 
@@ -64,6 +62,21 @@ const UatFormWizard = () => {
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Download the form data as a JSON file
+      const dataStr = JSON.stringify(submissionData, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "uat_onboarding_form_data.json";
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
       
       toast.success("UAT Onboarding request submitted successfully!");
       methods.reset();

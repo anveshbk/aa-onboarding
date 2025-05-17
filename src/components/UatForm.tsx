@@ -1,3 +1,4 @@
+
 import { useFormContext, Controller } from "react-hook-form";
 import { 
   FormField,
@@ -12,16 +13,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { useState, useEffect } from "react";
-import { Mail, User, FileText, Settings, Image } from "lucide-react";
+import { Mail, User, FileText, Settings, Image, Plus } from "lucide-react";
 import formFields from "@/data/formFields.json";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const UatForm = () => {
   const { control, watch } = useFormContext();
   const [licenseOptions, setLicenseOptions] = useState<string[]>([]);
+  const [customizeUIOpen, setCustomizeUIOpen] = useState(false);
   
   const regulatorValue = watch("regulator");
   const integrationMode = watch("integrationMode");
-  const fiuLogoVisible = watch("fiuLogoVisible");
 
   // Update license options when regulator changes
   useEffect(() => {
@@ -267,154 +270,149 @@ const UatForm = () => {
 
       {/* Conditional fields for Standard integration mode */}
       {integrationMode === "Standard" && (
-        <div className="space-y-6">
-          <h3 className="text-lg font-medium">Branding Options</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Primary Color */}
-            <FormField
-              control={control}
-              name="primaryColor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Primary Color</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="color" 
-                      {...field} 
-                      className="h-10 w-full cursor-pointer"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Primary brand color for UI elements
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <div className="space-y-4 border rounded-md p-4 bg-slate-50">
+          <Collapsible
+            open={customizeUIOpen}
+            onOpenChange={setCustomizeUIOpen}
+            className="space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Standard Integration Options</h3>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                  <Plus className="h-4 w-4" />
+                  <span>Customize AA Journey UI</span>
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            
+            <div className="text-sm text-muted-foreground">
+              Only applicable to standard Onemoney journey
+            </div>
+            
+            <CollapsibleContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Primary Color */}
+                <FormField
+                  control={control}
+                  name="primaryColor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Primary Color</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="color" 
+                          {...field} 
+                          className="h-10 w-full cursor-pointer"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Primary brand color for UI elements
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Secondary Color */}
-            <FormField
-              control={control}
-              name="secondaryColor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Secondary Color</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="color" 
-                      {...field} 
-                      className="h-10 w-full cursor-pointer"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Secondary brand color for UI elements
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                {/* Secondary Color */}
+                <FormField
+                  control={control}
+                  name="secondaryColor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Secondary Color</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="color" 
+                          {...field} 
+                          className="h-10 w-full cursor-pointer"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Secondary brand color for UI elements
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Primary Font */}
-            <FormField
-              control={control}
-              name="primaryFont"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Primary Font</FormLabel>
-                  <FormControl>
-                    <Input 
-                      {...field} 
-                      placeholder="Enter primary font name"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Primary font for headers
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                {/* Primary Font */}
+                <FormField
+                  control={control}
+                  name="primaryFont"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Primary Font</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Enter primary font name"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Primary font for headers
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Secondary Font */}
-            <FormField
-              control={control}
-              name="secondaryFont"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Secondary Font</FormLabel>
-                  <FormControl>
-                    <Input 
-                      {...field} 
-                      placeholder="Enter secondary font name"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Secondary font for body text
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                {/* Secondary Font */}
+                <FormField
+                  control={control}
+                  name="secondaryFont"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Secondary Font</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Enter secondary font name"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Secondary font for body text
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          {/* FIU Logo Visible on Onemoney */}
-          <FormField
-            control={control}
-            name="fiuLogoVisible"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">
-                    FIU Logo Visible on Onemoney to Customer
-                  </FormLabel>
-                  <FormDescription>
-                    Enable this to display the FIU logo on Onemoney
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          {/* Logo Upload (Conditional) */}
-          {fiuLogoVisible && (
-            <FormField
-              control={control}
-              name="fiuLogo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>FIU Logo</FormLabel>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                      <Image className="h-4 w-4" />
-                    </span>
-                    <FormControl>
-                      <Input
-                        type="file"
-                        accept="image/png, image/jpeg, image/svg+xml"
-                        className="pl-10"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            field.onChange(file);
-                          }
-                        }}
-                      />
-                    </FormControl>
-                  </div>
-                  <FormDescription>
-                    Upload your FIU logo (max 2MB, PNG, JPEG or SVG)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+                {/* FIU Logo */}
+                <FormField
+                  control={control}
+                  name="fiuLogo"
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormLabel>FIU Logo</FormLabel>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                          <Image className="h-4 w-4" />
+                        </span>
+                        <FormControl>
+                          <Input
+                            type="file"
+                            accept="image/png, image/jpeg, image/svg+xml"
+                            className="pl-10"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                field.onChange(file);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                      </div>
+                      <FormDescription>
+                        Upload your FIU logo (max 2MB, PNG, JPEG or SVG)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       )}
     </div>

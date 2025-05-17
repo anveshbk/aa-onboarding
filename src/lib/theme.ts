@@ -141,7 +141,8 @@ export const themeConfig = {
     borderRadius: '0.375rem',
     height: '2.5rem',
     padding: '0.5rem 0.75rem',
-    fontSize: '0.875rem'
+    fontSize: '0.875rem',
+    type: 'text'
   },
   buttons: {
     primary: {

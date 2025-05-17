@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,6 +13,7 @@ import { legalDetailsSchema } from "@/validation/legalDetailsSchema";
 import Logo from "@/components/Logo";
 import appConfig from "@/config/appConfig.json";
 import { ArrowRight } from "lucide-react";
+import StepIndicator from "@/components/StepIndicator";
 
 // Import the downloadJson utility
 import { downloadJson } from "@/utils/downloadUtils";
@@ -116,6 +118,8 @@ const FormWizard = () => {
     }
   };
   
+  const stepLabels = ["Personal Details", "Company Details", "Integration Details", "Legal Details", "Review & Submit"];
+  
   const steps = [
     {
       label: "Personal Details",
@@ -182,68 +186,30 @@ const FormWizard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8">
-      <div className="container mx-auto px-4 mb-8">
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="flex items-center text-primary hover:underline"
-        >
-          ← Back to Dashboard
-        </button>
-      </div>
-
-      <div className="container mx-auto px-4">
-        <Card className="p-6 mb-8">
-          <div className="mb-6 flex items-center">
-            <Logo showText={false} />
-            <h1 className="text-2xl font-bold ml-2">
-              {appConfig.onboarding.title}
-            </h1>
-          </div>
-          
-          <div className="mb-6">
-            <div className="flex justify-between mb-4">
-              {steps.map((step, index) => (
-                <div 
-                  key={index}
-                  className={`flex items-center ${index <= currentStep ? "text-primary" : "text-gray-400"}`}
-                >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 
-                    ${index <= currentStep ? "bg-primary text-white" : "bg-gray-200 text-gray-500"}`}>
-                    {index + 1}
-                  </div>
-                  <span className="hidden md:inline">{step.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
+    <div className="container mx-auto px-4">
+      <Card className="p-6 mb-8">
+        <div className="mb-6 flex items-center">
+          <Logo showText={false} className="h-12 w-12" />
+          <h1 className="text-2xl font-bold ml-3">
+            Account Aggregator Onboarding
+          </h1>
+        </div>
+        
+        <StepIndicator 
+          steps={stepLabels}
+          currentStep={currentStep}
+          onStepClick={(index) => {
+            // Only allow going back to previous steps
+            if (index < currentStep) {
+              setCurrentStep(index);
+            }
+          }}
+        />
+        
+        <div className="mt-8">
           {steps[currentStep].component}
-          
-          <div className="flex justify-between mt-6">
-            {currentStep > 0 && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCurrentStep(currentStep - 1)}
-              >
-                Back
-              </Button>
-            )}
-            {currentStep < steps.length - 1 && (
-              <Button
-                type="button"
-                onClick={() => {
-                  // This will be handled by each form's onSubmit
-                }}
-                className="ml-auto"
-              >
-                Next
-              </Button>
-            )}
-          </div>
-        </Card>
-      </div>
+        </div>
+      </Card>
     </div>
   );
 };
@@ -258,7 +224,9 @@ const PersonalDetailsForm = ({ onSubmit, methods }: any) => {
         <h2 className="text-lg font-semibold">Personal Details</h2>
         <p>Personal details form placeholder</p>
         <div className="flex justify-end">
-          <Button type="submit">Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
+          <Button type="submit" className="gap-2">
+            Next <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
       </form>
     </FormProvider>
@@ -274,7 +242,9 @@ const CompanyDetailsForm = ({ onSubmit, methods }: any) => {
         <h2 className="text-lg font-semibold">Company Details</h2>
         <p>Company details form placeholder</p>
         <div className="flex justify-end">
-          <Button type="submit">Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
+          <Button type="submit" className="gap-2">
+            Next <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
       </form>
     </FormProvider>
@@ -290,7 +260,9 @@ const IntegrationDetailsForm = ({ onSubmit, methods }: any) => {
         <h2 className="text-lg font-semibold">Integration Details</h2>
         <p>Integration details form placeholder</p>
         <div className="flex justify-end">
-          <Button type="submit">Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
+          <Button type="submit" className="gap-2">
+            Next <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
       </form>
     </FormProvider>
@@ -306,7 +278,9 @@ const LegalDetailsForm = ({ onSubmit, methods }: any) => {
         <h2 className="text-lg font-semibold">Legal Details</h2>
         <p>Legal details form placeholder</p>
         <div className="flex justify-end">
-          <Button type="submit">Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
+          <Button type="submit" className="gap-2">
+            Next <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
       </form>
     </FormProvider>

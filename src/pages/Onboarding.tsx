@@ -1,7 +1,7 @@
 
-import FormWizard from "@/components/FormWizard";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import FormWizard from "@/components/FormWizard";
 
 const Onboarding = () => {
   const navigate = useNavigate();

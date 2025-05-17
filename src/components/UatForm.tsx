@@ -1,4 +1,3 @@
-
 import { useFormContext, Controller } from "react-hook-form";
 import { 
   FormField,
@@ -10,20 +9,19 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { useState, useEffect } from "react";
-import { Mail, User, FileText, Settings, Image, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { FileUploadArea } from "@/components/ui/file-upload-area";
+import { Mail, User, FileText, Settings, Image } from "lucide-react";
 import formFields from "@/data/formFields.json";
 
 const UatForm = () => {
   const { control, watch } = useFormContext();
   const [licenseOptions, setLicenseOptions] = useState<string[]>([]);
-  const [showBrandingOptions, setShowBrandingOptions] = useState<boolean>(false);
   
   const regulatorValue = watch("regulator");
   const integrationMode = watch("integrationMode");
+  const fiuLogoVisible = watch("fiuLogoVisible");
 
   // Update license options when regulator changes
   useEffect(() => {
@@ -270,138 +268,152 @@ const UatForm = () => {
       {/* Conditional fields for Standard integration mode */}
       {integrationMode === "Standard" && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Standard Journey Options</h3>
-            <Button 
-              variant="outline" 
-              type="button" 
-              onClick={() => setShowBrandingOptions(!showBrandingOptions)}
-              size="sm"
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Customise AA Journey UI
-              <span className="text-xs text-muted-foreground">(only applicable to standard Onemoney journey)</span>
-            </Button>
+          <h3 className="text-lg font-medium">Branding Options</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Primary Color */}
+            <FormField
+              control={control}
+              name="primaryColor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Primary Color</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="color" 
+                      {...field} 
+                      className="h-10 w-full cursor-pointer"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Primary brand color for UI elements
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Secondary Color */}
+            <FormField
+              control={control}
+              name="secondaryColor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Secondary Color</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="color" 
+                      {...field} 
+                      className="h-10 w-full cursor-pointer"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Secondary brand color for UI elements
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Primary Font */}
+            <FormField
+              control={control}
+              name="primaryFont"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Primary Font</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      placeholder="Enter primary font name"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Primary font for headers
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Secondary Font */}
+            <FormField
+              control={control}
+              name="secondaryFont"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Secondary Font</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      placeholder="Enter secondary font name"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Secondary font for body text
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
-          {showBrandingOptions && (
-            <div className="bg-slate-50 p-4 rounded-md space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Primary Color */}
-                <FormField
-                  control={control}
-                  name="primaryColor"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Primary Color</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="color" 
-                          {...field} 
-                          className="h-10 w-full cursor-pointer"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Primary brand color for UI elements
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          {/* FIU Logo Visible on Onemoney */}
+          <FormField
+            control={control}
+            name="fiuLogoVisible"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">
+                    FIU Logo Visible on Onemoney to Customer
+                  </FormLabel>
+                  <FormDescription>
+                    Enable this to display the FIU logo on Onemoney
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
 
-                {/* Secondary Color */}
-                <FormField
-                  control={control}
-                  name="secondaryColor"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Secondary Color</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="color" 
-                          {...field} 
-                          className="h-10 w-full cursor-pointer"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Secondary brand color for UI elements
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Primary Font */}
-                <FormField
-                  control={control}
-                  name="primaryFont"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Primary Font</FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          placeholder="Enter primary font name"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Primary font for headers
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Secondary Font */}
-                <FormField
-                  control={control}
-                  name="secondaryFont"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Secondary Font</FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          placeholder="Enter secondary font name"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Secondary font for body text
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* FIU Logo Upload */}
-                <FormField
-                  control={control}
-                  name="fiuLogo"
-                  render={({ field }) => (
-                    <FormItem className="col-span-2">
-                      <FormLabel>FIU Logo</FormLabel>
-                      <FormControl>
-                        <FileUploadArea
-                          onChange={(value) => {
-                            if (value.file) {
-                              field.onChange(value.file);
-                            }
-                          }}
-                          maxSize={2}
-                          acceptedFileTypes={["image/png", "image/jpeg", "image/svg+xml"]}
-                          placeholder="Upload your FIU logo"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Upload your FIU logo (max 2MB, PNG, JPEG or SVG)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
+          {/* Logo Upload (Conditional) */}
+          {fiuLogoVisible && (
+            <FormField
+              control={control}
+              name="fiuLogo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>FIU Logo</FormLabel>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                      <Image className="h-4 w-4" />
+                    </span>
+                    <FormControl>
+                      <Input
+                        type="file"
+                        accept="image/png, image/jpeg, image/svg+xml"
+                        className="pl-10"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            field.onChange(file);
+                          }
+                        }}
+                      />
+                    </FormControl>
+                  </div>
+                  <FormDescription>
+                    Upload your FIU logo (max 2MB, PNG, JPEG or SVG)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           )}
         </div>
       )}

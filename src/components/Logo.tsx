@@ -1,4 +1,7 @@
 
+// This component is kept for reference but not used in the new login screen design
+// We're using a direct Lucide icon in the Login component instead
+
 import React from "react";
 
 interface LogoProps {

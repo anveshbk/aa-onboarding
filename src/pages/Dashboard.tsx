@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import OnboardingList from "@/components/OnboardingList";
 import Logo from "@/components/Logo";
 import appConfig from "@/config/appConfig.json";
+import { ArrowRight, Plus } from "lucide-react";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -18,8 +19,12 @@ const Dashboard = () => {
     }
   }, [navigate]);
 
-  const handleStartNewOnboarding = () => {
+  const handleStartProdOnboarding = () => {
     navigate("/onboarding");
+  };
+  
+  const handleStartUatOnboarding = () => {
+    navigate("/uat-onboarding");
   };
 
   const handleLogout = () => {
@@ -48,9 +53,23 @@ const Dashboard = () => {
                 <h2 className="text-xl font-semibold">Welcome to Onemoney!</h2>
                 <p className="text-muted-foreground">{appConfig.general.dashboardSubtitle}</p>
               </div>
-              <Button onClick={handleStartNewOnboarding}>
-                Onboard New FIU
-              </Button>
+              <div className="flex gap-3">
+                <Button 
+                  variant="secondary"
+                  onClick={handleStartUatOnboarding}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Onboard FIU to UAT
+                </Button>
+                <Button 
+                  onClick={handleStartProdOnboarding}
+                  className="gap-2"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  Onboard FIU to PROD
+                </Button>
+              </div>
             </div>
           </Card>
         </div>

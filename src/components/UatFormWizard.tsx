@@ -53,7 +53,14 @@ const UatFormWizard = () => {
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
-      console.log("Form submitted:", data);
+      // Add environment identifier and timestamp
+      const submissionData = {
+        ...data,
+        environment: "UAT",
+        submissionTimestamp: new Date().toISOString()
+      };
+      
+      console.log("Form submitted:", submissionData);
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));

@@ -144,7 +144,12 @@ const FormWizard = () => {
   };
 
   const handleSubmit = () => {
-    const completeFormData = { ...formData, ...methods.getValues() };
+    const completeFormData = { 
+      ...formData, 
+      ...methods.getValues(),
+      environment: "PROD",
+      submissionTimestamp: new Date().toISOString()
+    };
     console.log("Form Submitted:", completeFormData);
     
     // Download the form data as a JSON file

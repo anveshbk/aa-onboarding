@@ -4,20 +4,24 @@ import { cn } from "@/lib/utils";
 
 interface ToggleButtonGroupProps {
   options: string[];
-  value: string | string[];
-  onChange: (value: string | string[]) => void;
+  value?: string | string[];
+  onChange?: (value: string | string[]) => void;
   multiple?: boolean;
   className?: string;
+  disabled?: boolean;
 }
 
 export const ToggleButtonGroup: React.FC<ToggleButtonGroupProps> = ({
   options,
-  value,
-  onChange,
+  value = multiple ? [] : "",
+  onChange = () => {},
   multiple = false,
   className,
+  disabled = false,
 }) => {
   const handleClick = (option: string) => {
+    if (disabled) return;
+    
     if (multiple) {
       // For multiple selection mode
       const currentValues = Array.isArray(value) ? value : [];
@@ -57,9 +61,11 @@ export const ToggleButtonGroup: React.FC<ToggleButtonGroupProps> = ({
             "px-4 py-2 text-sm font-medium border rounded-md transition-colors",
             isSelected(option)
               ? "bg-primary/10 border-primary text-primary"
-              : "bg-background border-input text-foreground hover:bg-muted/50"
+              : "bg-background border-input text-foreground hover:bg-muted/50",
+            disabled && "opacity-50 cursor-not-allowed"
           )}
           onClick={() => handleClick(option)}
+          disabled={disabled}
         >
           {option}
         </button>

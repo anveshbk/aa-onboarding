@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -86,6 +85,37 @@ const FormWizard = () => {
     mode: "onChange",
   });
   
+  // Define onSubmitAllSteps function before it's used in the steps array
+  const onSubmitAllSteps = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      // Gather all form data
+      const allData = {
+        ...formData,
+        environment: "PROD", // Add environment identifier
+        submissionTimestamp: new Date().toISOString() // Add submission timestamp
+      };
+      
+      console.log("Final submission data:", allData);
+      
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      
+      // Download the submission data as JSON
+      downloadJson(allData, `prod-onboarding-${new Date().toISOString().split('T')[0]}.json`);
+      
+      toast.success("Your onboarding request has been submitted successfully.");
+      
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Submission error:", error);
+      toast.error("Failed to submit your request. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
   const steps = [
     {
       label: "Personal Details",
@@ -150,36 +180,6 @@ const FormWizard = () => {
       )
     }
   ];
-
-  const onSubmitAllSteps = async () => {
-    try {
-      setIsSubmitting(true);
-      
-      // Gather all form data
-      const allData = {
-        ...formData,
-        environment: "PROD", // Add environment identifier
-        submissionTimestamp: new Date().toISOString() // Add submission timestamp
-      };
-      
-      console.log("Final submission data:", allData);
-      
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      // Download the submission data as JSON
-      downloadJson(allData, `prod-onboarding-${new Date().toISOString().split('T')[0]}.json`);
-      
-      toast.success("Your onboarding request has been submitted successfully.");
-      
-      navigate("/dashboard");
-    } catch (error) {
-      console.error("Submission error:", error);
-      toast.error("Failed to submit your request. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-slate-50 py-8">

@@ -19,6 +19,9 @@ export const ToggleButtonGroup: React.FC<ToggleButtonGroupProps> = ({
   className,
   disabled = false,
 }) => {
+  // Safeguard to ensure we're always working with an array for multiple mode
+  const safeOptions = Array.isArray(options) ? options : [];
+  
   const handleClick = (option: string) => {
     if (disabled) return;
     
@@ -51,9 +54,12 @@ export const ToggleButtonGroup: React.FC<ToggleButtonGroupProps> = ({
     return value === option;
   };
 
+  // If no options are available, don't render anything
+  if (safeOptions.length === 0) return null;
+
   return (
     <div className={cn("flex flex-wrap gap-2", className)}>
-      {options.map((option) => (
+      {safeOptions.map((option) => (
         <button
           key={option}
           type="button"

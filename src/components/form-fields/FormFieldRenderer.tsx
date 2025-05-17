@@ -25,19 +25,21 @@ interface FormFieldRendererProps {
 const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({ field, fieldPath, disabled = false }) => {
   const { control } = useFormContext();
 
+  // Helper function to determine if options are valid
+  const hasValidOptions = (options?: string[]) => {
+    return Array.isArray(options) && options.length > 0;
+  };
+
   // Ensure field type is treated as text for rendering standard text inputs
   const renderInput = () => {
-    switch (field.type) {
+    // Override field type to text if it's a dropdown without options
+    const effectiveType = field.type === 'dropdown' && !hasValidOptions(field.options) 
+      ? 'text' 
+      : field.type;
+    
+    switch (effectiveType) {
       case 'dropdown':
-        if (!field.options || field.options.length === 0) {
-          // If dropdown has no options, render as text input
-          return (
-            <Input 
-              placeholder={field.placeholder || `Enter ${field.name.toLowerCase()}`}
-              disabled={disabled}
-            />
-          );
-        }
+        // This should only execute when options exist, since we changed effectiveType above
         return (
           <Select disabled={disabled}>
             <SelectTrigger>
@@ -61,12 +63,20 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({ field, fieldPath,
       
       case 'multipleOptions':
       case 'multiSelect':
-        if (!field.options || field.options.length === 0) {
-          return <Input placeholder={field.placeholder || `Enter ${field.name.toLowerCase()}`} disabled={disabled} />;
+        // Render as text input if no options are available
+        if (!hasValidOptions(field.options)) {
+          return (
+            <Input 
+              type="text" 
+              placeholder={field.placeholder || `Enter ${field.name.toLowerCase()}`}
+              disabled={disabled}
+            />
+          );
         }
+        
         return (
           <ToggleButtonGroup
-            options={field.options}
+            options={field.options || []}
             multiple={field.type === 'multiSelect'}
             disabled={disabled}
           />

@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils";
 
 interface ToggleButtonGroupProps {
   options: string[];
+  multiple?: boolean;
   value?: string | string[];
   onChange?: (value: string | string[]) => void;
-  multiple?: boolean;
   className?: string;
   disabled?: boolean;
 }

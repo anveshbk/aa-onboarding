@@ -30,16 +30,27 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({ field, fieldPath,
     return Array.isArray(options) && options.length > 0;
   };
 
-  // Ensure field type is treated as text for rendering standard text inputs
+  // Dynamically render the input component based on field type
   const renderInput = () => {
-    // Override field type to text if it's a dropdown without options
-    const effectiveType = field.type === 'dropdown' && !hasValidOptions(field.options) 
-      ? 'text' 
-      : field.type;
+    // Safeguard for fields that require options
+    const optionBasedTypes = ['dropdown', 'multipleOptions', 'multiSelect'];
+    const needsOptions = optionBasedTypes.includes(field.type);
+    const hasOptions = hasValidOptions(field.options);
     
-    switch (effectiveType) {
+    // If field type requires options but doesn't have any, fall back to text input
+    if (needsOptions && !hasOptions) {
+      return (
+        <Input 
+          type="text" 
+          placeholder={field.placeholder || `Enter ${field.name.toLowerCase()}`}
+          disabled={disabled}
+        />
+      );
+    }
+    
+    // Based on specific field type, render appropriate component
+    switch (field.type) {
       case 'dropdown':
-        // This should only execute when options exist, since we changed effectiveType above
         return (
           <Select disabled={disabled}>
             <SelectTrigger>
@@ -62,28 +73,61 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({ field, fieldPath,
         return <Checkbox disabled={disabled} />;
       
       case 'multipleOptions':
-      case 'multiSelect':
-        // Render as text input if no options are available
-        if (!hasValidOptions(field.options)) {
-          return (
-            <Input 
-              type="text" 
-              placeholder={field.placeholder || `Enter ${field.name.toLowerCase()}`}
-              disabled={disabled}
-            />
-          );
-        }
-        
         return (
           <ToggleButtonGroup
             options={field.options || []}
-            multiple={field.type === 'multiSelect'}
+            multiple={false}
+            disabled={disabled}
+          />
+        );
+        
+      case 'multiSelect':
+        return (
+          <ToggleButtonGroup
+            options={field.options || []}
+            multiple={true}
+            disabled={disabled}
+          />
+        );
+      
+      case 'date':
+        return (
+          <Input 
+            type="date" 
+            placeholder={field.placeholder || `Select date`}
+            disabled={disabled}
+          />
+        );
+        
+      case 'number':
+        return (
+          <Input 
+            type="number" 
+            placeholder={field.placeholder || `Enter number`}
+            disabled={disabled}
+          />
+        );
+        
+      case 'email':
+        return (
+          <Input 
+            type="email" 
+            placeholder={field.placeholder || `Enter email`}
+            disabled={disabled}
+          />
+        );
+        
+      case 'color':
+        return (
+          <Input 
+            type="color" 
+            className="h-10 w-full cursor-pointer"
             disabled={disabled}
           />
         );
       
       default:
-        // Default to text input for any unhandled types or when type is 'text'
+        // Default to text input for any unhandled types
         return (
           <Input 
             type="text" 

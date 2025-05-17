@@ -13,10 +13,11 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep, onSte
       <div className="w-full max-w-4xl mx-auto relative">
         {/* Progress Bar Lines */}
         <div className="absolute top-[18px] left-0 w-full h-[1px]">
-          {steps.map((_, index) => (
-            <React.Fragment key={`line-${index}`}>
-              {index < steps.length - 1 && (
+          {steps.map((_, index) => {
+            if (index < steps.length - 1) {
+              return (
                 <div 
+                  key={`line-${index}`}
                   className={`absolute h-[1px] ${
                     index < currentStep ? "bg-primary" : "bg-gray-200"
                   }`}
@@ -25,9 +26,10 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep, onSte
                     width: `${100 / (steps.length - 1)}%`,
                   }}
                 />
-              )}
-            </React.Fragment>
-          ))}
+              );
+            }
+            return null;
+          })}
         </div>
         
         {/* Step Circles and Labels */}

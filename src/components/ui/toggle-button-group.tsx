@@ -13,9 +13,9 @@ interface ToggleButtonGroupProps {
 
 export const ToggleButtonGroup: React.FC<ToggleButtonGroupProps> = ({
   options,
+  multiple = false,
   value = multiple ? [] : "",
   onChange = () => {},
-  multiple = false,
   className,
   disabled = false,
 }) => {

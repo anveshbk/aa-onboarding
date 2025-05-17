@@ -1,230 +1,226 @@
-
-import { useState, useEffect } from "react";
-import { useForm, FormProvider } from "react-hook-form";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
+import { useForm, FormProvider } from "react-hook-form";
+import { MultiStepForm, Step } from "react-hooks-multistep-form";
 import { Card } from "@/components/ui/card";
-import StepIndicator from "@/components/StepIndicator";
-import TspDetailsForm from "@/components/form-steps/TspDetailsForm";
-import FiuDetailsForm from "@/components/form-steps/FiuDetailsForm";
-import SpocDetailsForm from "@/components/form-steps/SpocDetailsForm";
-import IntegrationDetailsForm from "@/components/form-steps/IntegrationDetailsForm";
-import UserJourneySettingsForm from "@/components/form-steps/UserJourneySettingsForm";
-import ConsentParametersForm from "@/components/form-steps/ConsentParametersForm";
-import CocreatedDevelopmentForm from "@/components/form-steps/CocreatedDevelopmentForm";
-import { TspDetailsSchema } from "@/validation/tspDetailsSchema";
-import { FiuDetailsSchema } from "@/validation/fiuDetailsSchema";
-import { SpocDetailsSchema } from "@/validation/spocDetailsSchema";
-import { IntegrationDetailsSchema } from "@/validation/integrationDetailsSchema";
-import { UserJourneySettingsSchema } from "@/validation/userJourneySettingsSchema";
-import { ConsentParametersSchema } from "@/validation/consentParametersSchema";
-import { CocreatedDevelopmentSchema } from "@/validation/cocreatedDevelopmentSchema";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "@/components/ui/use-toast";
+import { personalDetailsSchema } from "@/validation/personalDetailsSchema";
+import { companyDetailsSchema } from "@/validation/companyDetailsSchema";
+import { integrationDetailsSchema } from "@/validation/integrationDetailsSchema";
+import { LegalDetailsSchema } from "@/validation/LegalDetailsSchema";
+import {
+  PersonalDetailsForm,
+  CompanyDetailsForm,
+  IntegrationDetailsForm,
+  LegalDetailsForm,
+  ReviewSubmitForm,
+} from "@/components/form-components";
 import Logo from "@/components/Logo";
 import appConfig from "@/config/appConfig.json";
+import { ArrowRight } from "lucide-react";
 
-type StepConfig = {
-  title: string;
-  description?: string;
-  component: React.ReactNode;
-  validationSchema: any;
-};
+// Import the downloadJson utility
+import { downloadJson } from "@/utils/downloadUtils";
 
 const FormWizard = () => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState<any>({});
-  const [showCocreatedDevelopment, setShowCocreatedDevelopment] = useState(false);
-  
-  // All schema fields are already optional in their respective schema files
-  const makeSchemaOptional = (schema: any) => {
-    // Return the schema as is, since fields are already optional
-    return schema;
-  };
-  
-  // Create steps dynamically, excluding conditional steps initially
-  const baseSteps: StepConfig[] = [
-    {
-      title: "TSP Details",
-      component: <TspDetailsForm />,
-      validationSchema: makeSchemaOptional(TspDetailsSchema),
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    personalDetails: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
     },
-    {
-      title: "FIU Details",
-      component: <FiuDetailsForm />,
-      validationSchema: makeSchemaOptional(FiuDetailsSchema),
+    companyDetails: {
+      companyName: "",
+      companyWebsite: "",
+      companyEmail: "",
+      companyPhone: "",
+      industry: "",
+      companySize: "",
     },
-    {
-      title: "FIU SPOC Details",
-      component: <SpocDetailsForm />,
-      validationSchema: makeSchemaOptional(SpocDetailsSchema),
+    integrationDetails: {
+      integrationType: {
+        webRedirection: false,
+        webRedirectionUrl: "",
+        sdk: false,
+        sdkVersion: "",
+        assisted: false,
+        detached: false,
+      },
+      integrationMode: "",
+      figmaUrl: "",
     },
-    {
-      title: "Integration to Onemoney",
-      component: <IntegrationDetailsForm setShowCocreatedDevelopment={setShowCocreatedDevelopment} />,
-      validationSchema: makeSchemaOptional(IntegrationDetailsSchema),
+    legalDetails: {
+      termsAndConditions: false,
+      privacyPolicy: false,
+      dataSecurity: false,
     },
-    {
-      title: "User Journey",
-      component: <UserJourneySettingsForm />,
-      validationSchema: makeSchemaOptional(UserJourneySettingsSchema),
-    },
-    {
-      title: "Consent Parameters",
-      component: <ConsentParametersForm />,
-      validationSchema: makeSchemaOptional(ConsentParametersSchema),
-    }
-  ];
-  
-  // Add conditional step if needed
-  useEffect(() => {
-    if (formData.integrationMode === "Cocreated FIU" || formData.integrationMode === "Cocreated TSP") {
-      setShowCocreatedDevelopment(true);
-    } else {
-      setShowCocreatedDevelopment(false);
-    }
-  }, [formData.integrationMode]);
-  
-  // Get the final steps array based on conditions
-  const steps = showCocreatedDevelopment 
-    ? [
-        ...baseSteps, 
-        {
-          title: "Cocreated Development",
-          description: "Applicable only for cocoreated development",
-          component: <CocreatedDevelopmentForm />,
-          validationSchema: makeSchemaOptional(CocreatedDevelopmentSchema),
-        }
-      ]
-    : baseSteps;
-
-  const currentValidationSchema = steps[currentStep].validationSchema;
-  const methods = useForm({
-    resolver: zodResolver(currentValidationSchema),
-    mode: "onChange",
-    defaultValues: formData,
   });
 
-  useEffect(() => {
-    methods.reset(formData);
-  }, [currentStep, formData, methods]);
+  const updateFormData = (step: string, data: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      [step]: { ...prev[step as keyof typeof prev], ...data },
+    }));
+  };
 
-  const handleNext = async () => {
-    const isValid = await methods.trigger();
-    
-    if (isValid) {
-      const currentData = methods.getValues();
-      setFormData({ ...formData, ...currentData });
+  const personalDetailsMethods = useForm({
+    resolver: zodResolver(personalDetailsSchema),
+    defaultValues: formData.personalDetails,
+    mode: "onChange",
+  });
+
+  const companyDetailsMethods = useForm({
+    resolver: zodResolver(companyDetailsSchema),
+    defaultValues: formData.companyDetails,
+    mode: "onChange",
+  });
+
+  const integrationDetailsMethods = useForm({
+    resolver: zodResolver(integrationDetailsSchema),
+    defaultValues: formData.integrationDetails,
+    mode: "onChange",
+  });
+
+  const legalDetailsMethods = useForm({
+    resolver: zodResolver(LegalDetailsSchema),
+    defaultValues: formData.legalDetails,
+    mode: "onChange",
+  });
+
+  const onSubmitAllSteps = async () => {
+    try {
+      setIsSubmitting(true);
       
-      if (currentStep < steps.length - 1) {
-        setCurrentStep(currentStep + 1);
-        window.scrollTo(0, 0);
-      } else {
-        handleSubmit();
-      }
+      // Gather all form data
+      const allData = {
+        ...formData,
+        environment: "PROD", // Add environment identifier
+        submissionTimestamp: new Date().toISOString() // Add submission timestamp
+      };
+      
+      console.log("Final submission data:", allData);
+      
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      
+      // Download the submission data as JSON
+      downloadJson(allData, `prod-onboarding-${new Date().toISOString().split('T')[0]}.json`);
+      
+      toast({
+        title: "Success!",
+        description: "Your onboarding request has been submitted successfully."
+      });
+      
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Submission error:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to submit your request. Please try again."
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      const currentData = methods.getValues();
-      setFormData({ ...formData, ...currentData });
-      setCurrentStep(currentStep - 1);
-      window.scrollTo(0, 0);
-    }
-  };
-
-  const handleStepClick = async (stepIndex: number) => {
-    // Save current form data before navigation
-    const currentData = methods.getValues();
-    setFormData({ ...formData, ...currentData });
-    
-    // Navigate to the selected step
-    setCurrentStep(stepIndex);
-    window.scrollTo(0, 0);
-  };
-
-  const handleSubmit = () => {
-    const completeFormData = { 
-      ...formData, 
-      ...methods.getValues(),
-      environment: "PROD",
-      submissionTimestamp: new Date().toISOString()
-    };
-    console.log("Form Submitted:", completeFormData);
-    
-    // Download the form data as a JSON file
-    const dataStr = JSON.stringify(completeFormData, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "onboarding_form_data.json";
-    document.body.appendChild(a);
-    a.click();
-    
-    // Clean up
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    // Show success message
-    alert("Onboarding form submitted successfully! The data has been downloaded as a JSON file.");
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 onemoney-form">
-      <Card className="mb-8">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Logo showText={false} />
-              <div>
-                <h1 className="text-xl font-bold">{appConfig.onboarding.title}</h1>
-                <p className="text-muted-foreground">{appConfig.onboarding.subtitle}</p>
-              </div>
-            </div>
-          </div>
-          
-          <StepIndicator 
-            steps={steps.map(step => step.title)} 
-            currentStep={currentStep}
-            onStepClick={handleStepClick}
-          />
-        </div>
-      </Card>
+    <div className="min-h-screen bg-slate-50 py-8">
+      <div className="container mx-auto px-4 mb-8">
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="flex items-center text-primary hover:underline"
+        >
+          ← Back to Dashboard
+        </button>
+      </div>
 
-      <Card className="mb-8">
-        <div className="p-6">
-          <div className="mb-6">
-            {steps[currentStep].description && (
-              <p className="text-muted-foreground mb-6">{steps[currentStep].description}</p>
-            )}
+      <div className="container mx-auto px-4">
+        <Card className="p-6 mb-8">
+          <div className="mb-6 flex items-center">
+            <Logo showText={false} />
+            <h1 className="text-2xl font-bold ml-2">
+              {appConfig.general.onboardingTitle}
+            </h1>
           </div>
-          
-          <FormProvider {...methods}>
-            <form>
-              {steps[currentStep].component}
-              
-              <div className="flex justify-between mt-8 pt-4 border-t">
+
+          <MultiStepForm
+            className="space-y-8"
+            onSubmit={onSubmitAllSteps}
+            loading={isSubmitting}
+            testId="multistep-form"
+          >
+            <Step label="Personal Details" testId="personal-details-step">
+              <FormProvider {...personalDetailsMethods}>
+                <PersonalDetailsForm
+                  onSubmit={(data) => {
+                    updateFormData("personalDetails", data);
+                    return true;
+                  }}
+                />
+              </FormProvider>
+            </Step>
+
+            <Step label="Company Details" testId="company-details-step">
+              <FormProvider {...companyDetailsMethods}>
+                <CompanyDetailsForm
+                  onSubmit={(data) => {
+                    updateFormData("companyDetails", data);
+                    return true;
+                  }}
+                />
+              </FormProvider>
+            </Step>
+
+            <Step
+              label="Integration Details"
+              testId="integration-details-step"
+            >
+              <FormProvider {...integrationDetailsMethods}>
+                <IntegrationDetailsForm
+                  onSubmit={(data) => {
+                    updateFormData("integrationDetails", data);
+                    return true;
+                  }}
+                />
+              </FormProvider>
+            </Step>
+
+            <Step label="Legal Details" testId="legal-details-step">
+              <FormProvider {...legalDetailsMethods}>
+                <LegalDetailsForm
+                  onSubmit={(data) => {
+                    updateFormData("legalDetails", data);
+                    return true;
+                  }}
+                />
+              </FormProvider>
+            </Step>
+
+            <Step label="Review & Submit" testId="review-submit-step">
+              <ReviewSubmitForm formData={formData} />
+              <div className="flex justify-end">
                 <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePrevious}
-                  disabled={currentStep === 0}
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="gap-2"
                 >
-                  Previous
-                </Button>
-                <Button 
-                  type="button" 
-                  onClick={handleNext}
-                >
-                  {currentStep === steps.length - 1 ? "Submit" : "Next"}
+                  Submit
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
-            </form>
-          </FormProvider>
-        </div>
-      </Card>
+            </Step>
+          </MultiStepForm>
+        </Card>
+      </div>
     </div>
   );
 };

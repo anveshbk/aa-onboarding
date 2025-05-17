@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { toast } from "sonner";
 import { ArrowRight } from "lucide-react";
 import UatForm from "@/components/UatForm";
+import { downloadJson } from "@/utils/downloadUtils";
 
 const formSchema = z.object({
   tspName: z.string().min(2, "Name must be at least 2 characters"),
@@ -22,7 +22,6 @@ const formSchema = z.object({
   secondaryColor: z.string().optional(),
   primaryFont: z.string().optional(),
   secondaryFont: z.string().optional(),
-  fiuLogoVisible: z.boolean().optional(),
   fiuLogo: z.any().optional(),
 });
 
@@ -46,7 +45,6 @@ const UatFormWizard = () => {
       secondaryColor: "",
       primaryFont: "",
       secondaryFont: "",
-      fiuLogoVisible: false,
     },
   });
 
@@ -64,6 +62,9 @@ const UatFormWizard = () => {
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Download the submission data as JSON
+      downloadJson(submissionData, `uat-onboarding-${new Date().toISOString().split('T')[0]}.json`);
       
       toast.success("UAT Onboarding request submitted successfully!");
       methods.reset();

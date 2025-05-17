@@ -32,11 +32,11 @@ const Logo: React.FC<LogoProps> = ({ className = "", showText = true, size = "me
 
   return (
     <div className={`flex items-center ${className}`}>
-      <div className={`${getSizeClass()} rounded-md flex items-center justify-center mx-auto`}>
+      <div className={`${getSizeClass()} bg-primary/10 rounded-md flex items-center justify-center mr-3 shadow-md transition-all duration-300 hover:shadow-lg`}>
         <img 
-          src="/lovable-uploads/2b4bfe1f-f702-4082-81fd-f84a95ab1bb8.png" 
+          src="/lovable-uploads/ff89eb96-7d0b-4052-a941-936e528829ad.png" 
           alt="Logo" 
-          className={`${getLogoSize()}`}
+          className={`${getLogoSize()} transition-transform duration-300`}
         />
       </div>
       {showText && (

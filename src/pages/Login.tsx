@@ -14,15 +14,19 @@ const Login = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md mx-auto">
-        <div className="mb-8 text-center logo-container transition-all duration-500">
-          <Logo className="justify-center mb-6" showText={false} size="medium" />
-          <h1 className="text-3xl font-bold text-gray-900">{appConfig.general.loginTitle}</h1>
-          <p className="text-gray-500 mt-2">{appConfig.general.loginSubtitle}</p>
-        </div>
-        <LoginForm />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4 relative overflow-hidden">
+      {/* Background pattern elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-[10%] left-[5%] w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-[10%] right-[5%] w-80 h-80 bg-blue-100/30 rounded-full blur-3xl"></div>
       </div>
+      
+      <div className="mb-8 text-center logo-container transition-all duration-500 z-10">
+        <Logo className="justify-center mb-6 transform hover:scale-105 transition-transform duration-300" showText={false} size="large" />
+        <h1 className="text-2xl font-bold text-gray-800">{appConfig.general.loginTitle}</h1>
+        <p className="text-muted-foreground">{appConfig.general.loginSubtitle}</p>
+      </div>
+      <LoginForm />
     </div>
   );
 };

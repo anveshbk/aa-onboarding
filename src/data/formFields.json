@@ -286,8 +286,7 @@
       {
         "id": "primaryFont",
         "name": "Primary Font",
-        "type": "dropdown",
-        "options": ["Arial", "Helvetica", "Open Sans", "Roboto", "Montserrat", "Poppins"],
+        "type": "text",
         "description": "Primary font for headers",
         "required": false,
         "conditionalDisplay": {
@@ -298,8 +297,7 @@
       {
         "id": "secondaryFont",
         "name": "Secondary Font",
-        "type": "dropdown",
-        "options": ["Arial", "Helvetica", "Open Sans", "Roboto", "Montserrat", "Poppins"],
+         "type": "text",
         "description": "Secondary font for body text",
         "required": false,
         "conditionalDisplay": {

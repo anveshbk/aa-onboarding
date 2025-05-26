@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -47,54 +48,60 @@ const LoginForm = () => {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-gray-700 font-medium">Email</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="name@example.com" 
-                  className="rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500" 
-                  {...field} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-gray-700 font-medium">Password</FormLabel>
-              <FormControl>
-                <Input 
-                  type="password" 
-                  placeholder="••••••••" 
-                  className="rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500" 
-                  {...field} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <Card className="w-full border rounded-lg shadow-sm overflow-hidden bg-white p-6">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-700 font-medium text-base">Email</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="name@example.com" 
+                    className="mt-1 w-full border-gray-200 rounded-md py-2" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-700 font-medium text-base">Password</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="password" 
+                    placeholder="••••••••" 
+                    className="mt-1 w-full border-gray-200 rounded-md py-2" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <div className="text-sm text-gray-500 my-2">
+            Demo credentials: admin@example.com / password123
+          </div>
 
-        <Button 
-          type="submit" 
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-md transition-colors font-medium"
-          disabled={loading}
-        >
-          {loading ? "Signing In..." : "Sign In"}
-        </Button>
-      </form>
-    </Form>
+          <Button 
+            type="submit" 
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-md" 
+            disabled={loading}
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </Button>
+        </form>
+      </Form>
+    </Card>
   );
 };
 
